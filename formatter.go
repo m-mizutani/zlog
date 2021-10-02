@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/k0kubun/colorstring"
+	"github.com/k0kubun/pp"
 	"github.com/m-mizutani/goerr"
 )
 
@@ -62,14 +63,18 @@ func (x *ConsoleFormatter) Write(ev *Event, w io.Writer) error {
 		return goerr.Wrap(err, "fail to write timestamp")
 	}
 
-	for k, v := range ev.Entry.values {
-		obj, err := json.Marshal(v)
-		if err != nil {
-			return goerr.Wrap(err, "marshal for console").With(k, v)
+	if len(ev.Values()) > 0 {
+		if _, err := w.Write([]byte("\n")); err != nil {
+			return goerr.Wrap(err, "fail to write console")
 		}
-		msg := fmt.Sprintf(" %s=%s", k, string(obj))
-		if _, err := w.Write([]byte(msg)); err != nil {
-			return goerr.Wrap(err, "fail to write timestamp")
+
+		for k, v := range ev.Values() {
+			if _, err := w.Write([]byte(fmt.Sprintf("\"%s\" => ", k))); err != nil {
+				return goerr.Wrap(err, "fail to write console")
+			}
+			if _, err := pp.Fprint(w, v); err != nil {
+				return goerr.Wrap(err)
+			}
 		}
 	}
 
