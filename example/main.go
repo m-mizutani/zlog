@@ -1,6 +1,10 @@
 package main
 
-import "github.com/m-mizutani/zlog"
+import (
+	"os"
+
+	"github.com/m-mizutani/zlog"
+)
 
 type myRecord struct {
 	Name  string
@@ -14,5 +18,20 @@ func main() {
 	}
 
 	logger := zlog.New()
-	logger.With("record", record).Info("test")
+	logger.With("record", record).Info("hello my logger")
+
+	changeWriter()
+	changeFormatter()
+}
+
+func changeWriter() {
+	logger := zlog.New()
+	logger.Writer = os.Stderr
+	logger.Info("output to stderr")
+}
+
+func changeFormatter() {
+	logger := zlog.New()
+	logger.Formatter = zlog.NewJsonFormatter()
+	logger.Info("output as json format")
 }

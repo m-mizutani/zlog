@@ -1,5 +1,7 @@
 package zlog
 
+import "reflect"
+
 type Entry struct {
 	logger *Logger
 	values map[string]interface{}
@@ -23,8 +25,13 @@ func (x *Entry) Values() map[string]interface{} {
 
 // With sets key-value pair for the log. A previous value is overwritten by same key.
 func (x *Entry) With(key string, value interface{}) *Entry {
-	x.values[key] = value
-	return x
+	e := newEntry(x.logger)
+	for k, v := range x.values {
+		e.values[k] = v
+	}
+
+	e.values[key] = newCensor(x.logger.Filters).clone(reflect.ValueOf(value), "").Interface()
+	return e
 }
 
 func (x *Entry) Trace(format string, args ...interface{}) {

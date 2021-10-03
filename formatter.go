@@ -46,16 +46,23 @@ func (x *JsonFormatter) Write(ev *Event, w io.Writer) error {
 
 type ConsoleFormatter struct {
 	TimeFormat string
+	NoColor    bool
 }
 
 func NewConsoleFormatter() *ConsoleFormatter {
 	return &ConsoleFormatter{
 		TimeFormat: "15:04:05.000",
+		NoColor:    false,
 	}
 }
 
 func (x *ConsoleFormatter) Write(ev *Event, w io.Writer) error {
-	base := fmt.Sprintf(colorstring.Color("%s [[red]%s[reset]] %s"),
+	baseFmt := colorstring.Color("%s [[red]%s[reset]] %s")
+	if x.NoColor {
+		baseFmt = "%s [%s] %s"
+	}
+
+	base := fmt.Sprintf(baseFmt,
 		ev.Timestamp.Format(x.TimeFormat),
 		ev.Level.String(),
 		ev.Msg)
@@ -72,6 +79,7 @@ func (x *ConsoleFormatter) Write(ev *Event, w io.Writer) error {
 			if _, err := w.Write([]byte(fmt.Sprintf("\"%s\" => ", k))); err != nil {
 				return goerr.Wrap(err, "fail to write console")
 			}
+			pp.ColoringEnabled = !x.NoColor
 			if _, err := pp.Fprint(w, v); err != nil {
 				return goerr.Wrap(err)
 			}

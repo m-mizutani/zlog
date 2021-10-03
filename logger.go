@@ -12,12 +12,13 @@ type Logger struct {
 	Level     LogLevel
 	Formatter Formatter
 	Writer    io.Writer
+	Filters   Filters
 
 	errors []error
 	infra  *Infra
 }
 
-//
+// New provides default setting zlog logger. Info level, console formatter and stdout.
 func New() *Logger {
 	return &Logger{
 		Level:     LevelInfo,
