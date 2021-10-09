@@ -30,7 +30,7 @@ func (x *Entry) With(key string, value interface{}) *Entry {
 		e.values[k] = v
 	}
 
-	if len(x.logger.Filters) > 0 {
+	if len(x.logger.Filters) > 0 && value != nil {
 		e.values[key] = newCensor(x.logger.Filters).clone(reflect.ValueOf(value), "").Interface()
 	} else {
 		e.values[key] = value

@@ -24,7 +24,10 @@ func (x *censor) clone(value reflect.Value, tag string) reflect.Value {
 
 	src := value
 	if value.Kind() == reflect.Ptr {
-		src = src.Elem()
+		if value.IsNil() {
+			return reflect.New(value.Type()).Elem()
+		}
+		src = value.Elem()
 	}
 
 	var dst reflect.Value

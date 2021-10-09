@@ -175,17 +175,21 @@ func TestClone(t *testing.T) {
 		})
 
 		t.Run("various field", func(t *testing.T) {
+			type child struct{}
 			type myStruct struct {
-				Func  func() time.Time
-				Chan  chan int
-				Bool  bool
-				Bytes []byte
+				Func      func() time.Time
+				Chan      chan int
+				Bool      bool
+				Bytes     []byte
+				Interface interface{}
+				Child     *child
 			}
 			data := &myStruct{
 				Func:  time.Now,
 				Chan:  make(chan int),
 				Bool:  true,
 				Bytes: []byte("timeless"),
+				Child: nil,
 			}
 			v := c.Clone(data)
 			require.NotNil(t, v)
