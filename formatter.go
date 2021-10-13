@@ -36,7 +36,7 @@ func (x *JsonFormatter) Write(ev *Event, w io.Writer) error {
 		Timestamp: ev.Timestamp.Format(x.TimeFormat),
 		Level:     ev.Level.String(),
 		Msg:       ev.Msg,
-		Values:    ev.Entry.values,
+		Values:    ev.LogEntity.values,
 	}
 	if err := json.NewEncoder(w).Encode(m); err != nil {
 		return goerr.Wrap(err)

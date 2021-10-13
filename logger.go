@@ -38,24 +38,28 @@ func (x *Logger) SetLogLevel(level string) error {
 	return nil
 }
 
-func (x *Logger) With(key string, value interface{}) *Entry {
-	e := newEntry(x)
+func (x *Logger) With(key string, value interface{}) *LogEntity {
+	e := x.Log()
 	return e.With(key, value)
 }
 
-func (x *Logger) Msg(level LogLevel, e *Entry, format string, args ...interface{}) {
+func (x *Logger) Log() *LogEntity {
+	return newLogEntity(x)
+}
+
+func (x *Logger) Msg(level LogLevel, e *LogEntity, format string, args ...interface{}) {
 	if level < x.Level {
 		return // skip
 	}
 
 	if e == nil {
-		e = &Entry{}
+		e = &LogEntity{}
 	}
 	ev := &Event{
 		Level:     level,
 		Msg:       fmt.Sprintf(format, args...),
 		Timestamp: x.infra.Now(),
-		Entry:     *e,
+		LogEntity: *e,
 	}
 
 	if err := x.Formatter.Write(ev, x.Writer); err != nil {
