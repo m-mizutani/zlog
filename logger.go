@@ -38,6 +38,10 @@ func (x *Logger) SetLogLevel(level string) error {
 	return nil
 }
 
+func (x *Logger) AddFilter(filter Filter) {
+	x.Filters = append(x.Filters, filter)
+}
+
 func (x *Logger) With(key string, value interface{}) *LogEntity {
 	e := x.Log()
 	return e.With(key, value)
