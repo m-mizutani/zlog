@@ -29,6 +29,15 @@ func New() *Logger {
 	}
 }
 
+func (x *Logger) SetLogLevel(level string) error {
+	l, err := StrToLogLevel(level)
+	if err != nil {
+		return err
+	}
+	x.Level = l
+	return nil
+}
+
 func (x *Logger) With(key string, value interface{}) *Entry {
 	e := newEntry(x)
 	return e.With(key, value)

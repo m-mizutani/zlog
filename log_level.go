@@ -1,6 +1,10 @@
 package zlog
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/m-mizutani/goerr"
+)
 
 type LogLevel int
 
@@ -39,7 +43,7 @@ func initLogLevelMap() {
 func StrToLogLevel(s string) (LogLevel, error) {
 	level, ok := strToLevelMap[strings.ToLower(s)]
 	if !ok {
-		return LevelError, nil
+		return LevelError, goerr.Wrap(ErrInvalidLogLevel).With("level", s)
 	}
 	return level, nil
 }
