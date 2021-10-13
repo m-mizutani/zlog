@@ -69,9 +69,6 @@ func (x *Logger) Msg(level LogLevel, e *LogEntity, format string, args ...interf
 	if err := x.Formatter.Write(ev, x.Writer); err != nil {
 		x.errors = append(x.errors, goerr.Wrap(err))
 	}
-	if _, err := x.Writer.Write([]byte("\n")); err != nil {
-		x.errors = append(x.errors, goerr.Wrap(err))
-	}
 }
 
 func (x *Logger) GetErrors() []error { return x.errors }
