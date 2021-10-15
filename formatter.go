@@ -69,12 +69,11 @@ func (x *ConsoleFormatter) Write(ev *Event, w io.Writer) error {
 	if _, err := w.Write([]byte(base)); err != nil {
 		return goerr.Wrap(err, "fail to write timestamp")
 	}
+	if _, err := w.Write([]byte("\n")); err != nil {
+		return goerr.Wrap(err, "fail to write console")
+	}
 
 	if len(ev.Values()) > 0 {
-		if _, err := w.Write([]byte("\n")); err != nil {
-			return goerr.Wrap(err, "fail to write console")
-		}
-
 		for k, v := range ev.Values() {
 			if _, err := w.Write([]byte(fmt.Sprintf("\"%s\" => ", k))); err != nil {
 				return goerr.Wrap(err, "fail to write console")
@@ -83,10 +82,10 @@ func (x *ConsoleFormatter) Write(ev *Event, w io.Writer) error {
 			if _, err := pp.Fprint(w, v); err != nil {
 				return goerr.Wrap(err)
 			}
+			if _, err := w.Write([]byte("\n")); err != nil {
+				return goerr.Wrap(err, "fail to write console")
+			}
 		}
-	}
-	if _, err := w.Write([]byte("\n")); err != nil {
-		return goerr.Wrap(err, "fail to write console")
 	}
 
 	return nil
