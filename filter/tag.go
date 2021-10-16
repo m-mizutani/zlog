@@ -6,7 +6,7 @@ type TagFilter struct {
 
 func Tag() *TagFilter {
 	return &TagFilter{
-		SecureTag: "secure",
+		SecureTag: "secret",
 	}
 }
 

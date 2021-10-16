@@ -57,7 +57,7 @@ func ExampleTagFilter() {
 
 	type myRecord struct {
 		ID    string
-		EMail string `zlog:"secure"`
+		EMail string `zlog:"secret"`
 	}
 	record := myRecord{
 		ID:    "m-mizutani",
