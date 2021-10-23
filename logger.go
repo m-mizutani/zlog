@@ -2,17 +2,14 @@ package zlog
 
 import (
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/m-mizutani/goerr"
 )
 
 type Logger struct {
-	Level     LogLevel
-	Formatter Formatter
-	Writer    io.Writer
-	Filters   Filters
+	Level   LogLevel
+	Emitter Emitter
+	Filters Filters
 
 	errors []error
 	infra  *Infra
@@ -21,9 +18,8 @@ type Logger struct {
 // New provides default setting zlog logger. Info level, console formatter and stdout.
 func New() *Logger {
 	return &Logger{
-		Level:     LevelInfo,
-		Formatter: NewConsoleFormatter(),
-		Writer:    os.Stdout,
+		Level:   LevelInfo,
+		Emitter: NewWriter(),
 
 		infra: newInfra(),
 	}
@@ -66,7 +62,7 @@ func (x *Logger) Msg(level LogLevel, e *LogEntity, format string, args ...interf
 		LogEntity: *e,
 	}
 
-	if err := x.Formatter.Write(ev, x.Writer); err != nil {
+	if err := x.Emitter.Emit(ev); err != nil {
 		x.errors = append(x.errors, goerr.Wrap(err))
 	}
 }
