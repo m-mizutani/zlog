@@ -1,16 +1,18 @@
 package zlog_test
 
 import (
+	"os"
+
 	"github.com/m-mizutani/zlog"
 	"github.com/m-mizutani/zlog/filter"
 )
 
 func newExampleLogger() *zlog.Logger {
 	logger := zlog.New()
-	logger.Formatter = &zlog.ConsoleFormatter{
+	logger.Emitter = zlog.NewWriterWith(&zlog.ConsoleFormatter{
 		TimeFormat: "",
 		NoColor:    true,
-	}
+	}, os.Stdout)
 	return logger
 }
 

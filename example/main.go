@@ -26,12 +26,12 @@ func main() {
 
 func changeWriter() {
 	logger := zlog.New()
-	logger.Writer = os.Stderr
+	logger.Emitter = zlog.NewWriterWith(zlog.NewConsoleFormatter(), os.Stderr)
 	logger.Info("output to stderr")
 }
 
 func changeFormatter() {
 	logger := zlog.New()
-	logger.Formatter = zlog.NewJsonFormatter()
+	logger.Emitter = zlog.NewWriterWith(zlog.NewJsonFormatter(), os.Stdout)
 	logger.Info("output as json format")
 }

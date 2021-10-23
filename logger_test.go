@@ -12,7 +12,7 @@ import (
 func newTestLogger() (*zlog.Logger, *bytes.Buffer) {
 	var buf bytes.Buffer
 	logger := zlog.New()
-	logger.Writer = &buf
+	logger.Emitter = zlog.NewWriterWith(zlog.NewConsoleFormatter(), &buf)
 	return logger, &buf
 }
 
