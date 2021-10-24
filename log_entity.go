@@ -1,10 +1,13 @@
 package zlog
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type LogEntity struct {
 	logger *Logger
 	values map[string]interface{}
+	err    *Error
 }
 
 func newLogEntity(logger *Logger) *LogEntity {
@@ -23,12 +26,19 @@ func (x *LogEntity) Values() map[string]interface{} {
 	return kv
 }
 
+func (x *LogEntity) Clone() *LogEntity {
+	entry := newLogEntity(x.logger)
+	for k, v := range x.values {
+		entry.values[k] = v
+	}
+	entry.err = x.err
+
+	return entry
+}
+
 // With sets key-value pair for the log. A previous value is overwritten by same key.
 func (x *LogEntity) With(key string, value interface{}) *LogEntity {
-	e := newLogEntity(x.logger)
-	for k, v := range x.values {
-		e.values[k] = v
-	}
+	e := x.Clone()
 
 	if len(x.logger.Filters) > 0 && value != nil {
 		e.values[key] = newCensor(x.logger.Filters).clone(reflect.ValueOf(value), "").Interface()
@@ -36,6 +46,13 @@ func (x *LogEntity) With(key string, value interface{}) *LogEntity {
 		e.values[key] = value
 	}
 
+	return e
+}
+
+// Err sets error and extracts stacktrace if available. LogEntity can have only one error
+func (x *LogEntity) Err(err error) *LogEntity {
+	e := x.Clone()
+	e.err = newError(err)
 	return e
 }
 

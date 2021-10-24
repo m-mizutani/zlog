@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"reflect"
 
 	"github.com/k0kubun/colorstring"
 	"github.com/k0kubun/pp"
 	"github.com/m-mizutani/goerr"
+	"github.com/pkg/errors"
 )
 
 type Formatter interface {
@@ -28,7 +30,69 @@ type JsonMsg struct {
 	Timestamp string                 `json:"timestamp"`
 	Level     string                 `json:"level"`
 	Msg       string                 `json:"msg"`
-	Values    map[string]interface{} `json:"values"`
+	Values    map[string]interface{} `json:"values,omitempty"`
+	Error     *JsonError             `json:"error,omitempty"`
+}
+
+type JsonErrorStack struct {
+	Function string `json:"function"`
+	File     string `json:"file"`
+}
+
+type JsonErrorMsg struct {
+	Msg  string `json:"msg"`
+	Type string `json:"type"`
+}
+
+type JsonError struct {
+	JsonErrorMsg
+	Causes     []*JsonErrorMsg        `json:"causes,omitempty"`
+	StackTrace []*JsonErrorStack      `json:"stacktrace,omitempty"`
+	Values     map[string]interface{} `json:"values,omitempty"`
+}
+
+func newJsonError(err *Error) *JsonError {
+	if err == nil {
+		return nil
+	}
+
+	jerr := &JsonError{
+		JsonErrorMsg: JsonErrorMsg{
+			Msg:  err.Err.Error(),
+			Type: reflect.TypeOf(err.Err).String(),
+		},
+	}
+
+	cause := err.Err
+	for {
+		if unwrapped := errors.Cause(cause); cause != unwrapped {
+			cause = unwrapped
+		} else {
+			break
+		}
+
+		jerr.Causes = append(jerr.Causes, &JsonErrorMsg{
+			Msg:  cause.Error(),
+			Type: reflect.TypeOf(cause).String(),
+		})
+	}
+
+	if len(err.StackTrace) > 0 {
+		for _, frame := range err.StackTrace {
+			jerr.StackTrace = append(jerr.StackTrace, &JsonErrorStack{
+				Function: frame.Function,
+				File:     fmt.Sprintf("%s:%d", frame.Filename, frame.Lineno),
+			})
+		}
+	}
+	if err.Values != nil && len(err.Values) > 0 {
+		jerr.Values = make(map[string]interface{})
+		for key, value := range err.Values {
+			jerr.Values[key] = value
+		}
+	}
+
+	return jerr
 }
 
 func (x *JsonFormatter) Write(ev *Event, w io.Writer) error {
@@ -37,7 +101,9 @@ func (x *JsonFormatter) Write(ev *Event, w io.Writer) error {
 		Level:     ev.Level.String(),
 		Msg:       ev.Msg,
 		Values:    ev.LogEntity.values,
+		Error:     newJsonError(ev.err),
 	}
+
 	if err := json.NewEncoder(w).Encode(m); err != nil {
 		return goerr.Wrap(err)
 	}
@@ -94,6 +160,30 @@ func (x *ConsoleFormatter) Write(ev *Event, w io.Writer) error {
 				return goerr.Wrap(err, "fail to write console")
 			}
 		}
+	}
+
+	if ev.err != nil {
+		errType := reflect.TypeOf(ev.err.Err)
+
+		fmt.Fprintf(w, "\n------------------\n")
+		fmt.Fprintf(w, "%s:  %s\n", errType, ev.err.Err.Error())
+
+		if len(ev.err.StackTrace) > 0 {
+			fmt.Fprintf(w, "\n[StackTrace]\n")
+			for _, frame := range ev.err.StackTrace {
+				fmt.Fprintf(w, "%s\n\t%s:%d\n", frame.Function, frame.Filename, frame.Lineno)
+			}
+		}
+		if ev.err.Values != nil && len(ev.err.Values) > 0 {
+			fmt.Fprintf(w, "\n[Values]\n")
+			for key, value := range ev.err.Values {
+				fmt.Fprintf(w, "%s => ", key)
+				pp.ColoringEnabled = !x.NoColor
+				pp.Fprint(w, value)
+				fmt.Fprintf(w, "\n")
+			}
+		}
+		fmt.Fprintf(w, "------------------\n\n")
 	}
 
 	return nil
