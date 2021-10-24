@@ -43,6 +43,11 @@ func (x *Logger) With(key string, value interface{}) *LogEntity {
 	return e.With(key, value)
 }
 
+func (x *Logger) Err(err error) *LogEntity {
+	e := x.Log()
+	return e.Err(err)
+}
+
 func (x *Logger) Log() *LogEntity {
 	return newLogEntity(x)
 }
