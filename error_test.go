@@ -30,7 +30,7 @@ func TestErrWithPkgErrors(t *testing.T) {
 
 	output := buf.String()
 	assert.Contains(t, output, "[StackTrace]\ngithub.com/m-mizutani/zlog_test.crash1\n")
-	assert.Contains(t, output, "github.com/m-mizutani/zlog/error_test.go:14\n")
+	assert.Contains(t, output, "/zlog/error_test.go:14\n")
 	assert.NotContains(t, output, "[Values]\nparam => \"value\"\n")
 
 	// Output:
@@ -95,7 +95,7 @@ func TestErrWithGoErr(t *testing.T) {
 
 	output := buf.String()
 	assert.Contains(t, output, "[StackTrace]\ngithub.com/m-mizutani/zlog_test.crash2\n")
-	assert.Contains(t, output, "github.com/m-mizutani/zlog/error_test.go:18\n")
+	assert.Contains(t, output, "/zlog/error_test.go:18\n")
 	assert.Contains(t, output, "[Values]\nparam => \"value\"\n")
 
 	// Example Output: (Do not use below as Example test because path/version should be changed by environment)
