@@ -4,6 +4,21 @@ Structured logger in Go.
 
 ## Usage
 
+<!-- TOC depthfrom:undefined -->
+
+- [Basic example](#basic-example)
+- [Customize Log output format](#customize-log-output-format)
+    - [Change io.Writer](#change-iowriter)
+    - [Change formatter](#change-formatter)
+    - [Use original emitter](#use-original-emitter)
+- [Filter sensitive data](#filter-sensitive-data)
+    - [By specified value](#by-specified-value)
+    - [By custom type](#by-custom-type)
+    - [By struct tag](#by-struct-tag)
+    - [By data pattern (e.g. personal information)](#by-data-pattern-eg-personal-information)
+
+<!-- /TOC -->
+
 ### Basic example
 
 ```go
@@ -25,22 +40,58 @@ func main() {
 }
 ```
 
+`zlog.New()` creates a new logger with default settings (console formatter).
+
 ![example](https://user-images.githubusercontent.com/605953/135705361-a3edcdb7-58c4-45e7-848c-5086270ad312.png)
 
-### Change io.Writer
+### Customize Log output format
+
+#### Change io.Writer
+
+For example, change output to standard error.
 
 ```go
-logger.Writer = os.Stderr
+logger.Emitter = zlog.NewWriterWith(zlog.NewConsoleFormatter(), os.Stderr)
 logger.Info("output to stderr")
 ```
 
+#### Change formatter
 
-### Change formatter
+For example, use JsonFormatter to output structured json.
 
 ```go
-logger.Formatter = zlog.NewJsonFormatter()
+logger.Emitter = zlog.NewWriterWith(zlog.NewJsonFormatter(), os.Stdout)
 logger.Info("output as json format")
 // Output: {"timestamp":"2021-10-02T14:58:11.791258","level":"info","msg":"output as json format","values":null}
+```
+
+#### Use original emitter
+
+`Emitter` is interface to output log event. You can use your original Emitter that has `Emit(*zlog.Event) error` method.
+
+```go
+
+type myEmitter struct {
+	seq int
+}
+
+func (x *myEmitter) Emit(ev *zlog.Event) error {
+	x.seq++
+	prefix := []string{"＼(^o^)／", "(´・ω・｀)", "(・∀・)"}
+	fmt.Println(prefix[x.seq%3], ev.Msg)
+	return nil
+}
+
+func ExampleEmitter() {
+	logger := zlog.New()
+	logger.Emitter = &myEmitter{}
+
+	logger.Info("waiwai")
+	logger.Info("heyhey")
+	// Output:
+	// ＼(^o^)／ waiwai
+	// (´・ω・｀) heyhey
+}
 ```
 
 ### Filter sensitive data
@@ -108,7 +159,7 @@ logger.Info("output as json format")
 	// }
 ```
 
-#### By PII (Personally Identifiable Information) data pattern
+#### By data pattern (e.g. personal information)
 
 ```go
 	type myRecord struct {
