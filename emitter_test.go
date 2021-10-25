@@ -11,9 +11,9 @@ type myEmitter struct {
 }
 
 func (x *myEmitter) Emit(ev *zlog.Event) error {
-	x.seq++
 	prefix := []string{"＼(^o^)／", "(´・ω・｀)", "(・∀・)"}
 	fmt.Println(prefix[x.seq%3], ev.Msg)
+	x.seq++
 	return nil
 }
 

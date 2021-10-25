@@ -65,7 +65,6 @@ func TestErrWithPkgErrorsWithJSON(t *testing.T) {
 	logger.Emitter = zlog.NewWriterWith(&zlog.JsonFormatter{}, &buf)
 
 	logger.Err(errors.Wrap(crash1(), "wrapped")).Error("bomb!")
-	t.Log(buf.String())
 
 	assert.Contains(t, buf.String(), `"msg":"wrapped: oops"`)
 	assert.Contains(t, buf.String(), `"function":"github.com/m-mizutani/zlog_test.TestErrWithPkgErrorsWithJSON"`)
@@ -77,7 +76,6 @@ func TestErrWithGoErrWithJSON(t *testing.T) {
 	logger.Emitter = zlog.NewWriterWith(&zlog.JsonFormatter{}, &buf)
 
 	logger.Err(goerr.Wrap(crash2(), "wrapped")).Error("bomb!")
-	t.Log(buf.String())
 
 	assert.Contains(t, buf.String(), `"msg":"wrapped: oops"`)
 	assert.Contains(t, buf.String(), `"function":"github.com/m-mizutani/zlog_test.TestErrWithGoErrWithJSON"`)
