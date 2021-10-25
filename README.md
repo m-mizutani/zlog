@@ -4,20 +4,19 @@ Structured logger in Go.
 
 ## Usage
 
-<!-- TOC depthfrom:undefined -->
-
 - [Basic example](#basic-example)
 - [Customize Log output format](#customize-log-output-format)
     - [Change io.Writer](#change-iowriter)
     - [Change formatter](#change-formatter)
     - [Use original emitter](#use-original-emitter)
+- [Error handling](#error-handling)
+    - [Output stack trace](#output-stack-trace)
+    - [Output error related values](#output-error-related-values)
 - [Filter sensitive data](#filter-sensitive-data)
     - [By specified value](#by-specified-value)
     - [By custom type](#by-custom-type)
     - [By struct tag](#by-struct-tag)
     - [By data pattern (e.g. personal information)](#by-data-pattern-eg-personal-information)
-
-<!-- /TOC -->
 
 ### Basic example
 
@@ -46,6 +45,8 @@ func main() {
 
 ### Customize Log output format
 
+zlog has `Emitter` that is interface to output log event. A default emitter is `Writer` that has `Formatter` to format log message, values and error information and `io.Writer` to output formatted log data.
+
 #### Change io.Writer
 
 For example, change output to standard error.
@@ -67,7 +68,7 @@ logger.Info("output as json format")
 
 #### Use original emitter
 
-`Emitter` is interface to output log event. You can use your original Emitter that has `Emit(*zlog.Event) error` method.
+You can use your original Emitter that has `Emit(*zlog.Event) error` method.
 
 ```go
 
@@ -93,6 +94,76 @@ func ExampleEmitter() {
 	// (´・ω・｀) heyhey
 }
 ```
+
+### Error handling
+
+`Logger.Err(err error)` outputs not only error message but also stack trace and error related values.
+
+#### Output stack trace
+
+Support below error packages.
+
+- [github.com/pkg/errors](https://github.com/pkg/errors)
+- [github.com/m-mizutani/goerr](https://github.com/m-mizutani/goerr)
+
+```go
+func crash() error {
+	return errors.New("oops")
+}
+
+func main() {
+	logger := zlog.New()
+	if err := crash(); err != nil {
+		logger.Err(err).Error("failed")
+	}
+}
+
+// Output:
+// [error] failed
+//
+// ------------------
+// *errors.fundamental: oops
+//
+// [StackTrace]
+// github.com/m-mizutani/zlog_test.crash
+// 	/Users/mizutani/.ghq/github.com/m-mizutani/zlog_test/main.go:xx
+// github.com/m-mizutani/zlog_test.main
+// 	/Users/mizutani/.ghq/github.com/m-mizutani/zlog_test/main.go:xx
+// runtime.main
+//	/usr/local/Cellar/go/1.17/libexec/src/runtime/proc.go:255
+// runtime.goexit
+//	/usr/local/Cellar/go/1.17/libexec/src/runtime/asm_amd64.s:1581
+// ------------------
+```
+
+#### Output error related values
+
+```go
+func crash(args string) error {
+	return goerr.New("oops").With("args", args)
+}
+
+func main() {
+	logger := zlog.New()
+	if err := crash("hello"); err != nil {
+		logger.Err(err).Error("failed")
+	}
+}
+
+// Output:
+// [error] failed
+//
+// ------------------
+// *goerr.Error: oops
+//
+// (snip)
+//
+// [Values]
+// args => "hello"
+// ------------------
+```
+
+
 
 ### Filter sensitive data
 
