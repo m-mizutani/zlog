@@ -42,6 +42,8 @@ func main() {
 
 `zlog.New()` creates a new logger with default settings (console formatter).
 
+`Logger.With()` method allows contextual logging. The method saves a pair of key and value and output it by pretty printing (powered by [k0kubun/pp](https://github.com/k0kubun/pp)).
+
 ![example](https://user-images.githubusercontent.com/605953/135705361-a3edcdb7-58c4-45e7-848c-5086270ad312.png)
 
 ### Customize Log output format
