@@ -16,6 +16,8 @@ type Formatter interface {
 	Write(ev *Event, w io.Writer) error
 }
 
+// ------------------------------
+// JsonFormatter outputs log as one line JSON text
 type JsonFormatter struct {
 	TimeFormat string
 }
@@ -26,38 +28,38 @@ func NewJsonFormatter() *JsonFormatter {
 	}
 }
 
-type JsonMsg struct {
+type jsonMsg struct {
 	Timestamp string                 `json:"timestamp"`
 	Level     string                 `json:"level"`
 	Msg       string                 `json:"msg"`
 	Values    map[string]interface{} `json:"values,omitempty"`
-	Error     *JsonError             `json:"error,omitempty"`
+	Error     *jsonError             `json:"error,omitempty"`
 }
 
-type JsonErrorStack struct {
+type jsonErrorStack struct {
 	Function string `json:"function"`
 	File     string `json:"file"`
 }
 
-type JsonErrorMsg struct {
+type jsonErrorMsg struct {
 	Msg  string `json:"msg"`
 	Type string `json:"type"`
 }
 
-type JsonError struct {
-	JsonErrorMsg
-	Causes     []*JsonErrorMsg        `json:"causes,omitempty"`
-	StackTrace []*JsonErrorStack      `json:"stacktrace,omitempty"`
+type jsonError struct {
+	jsonErrorMsg
+	Causes     []*jsonErrorMsg        `json:"causes,omitempty"`
+	StackTrace []*jsonErrorStack      `json:"stacktrace,omitempty"`
 	Values     map[string]interface{} `json:"values,omitempty"`
 }
 
-func newJsonError(err *Error) *JsonError {
+func newjsonError(err *Error) *jsonError {
 	if err == nil {
 		return nil
 	}
 
-	jerr := &JsonError{
-		JsonErrorMsg: JsonErrorMsg{
+	jerr := &jsonError{
+		jsonErrorMsg: jsonErrorMsg{
 			Msg:  err.Err.Error(),
 			Type: reflect.TypeOf(err.Err).String(),
 		},
@@ -71,7 +73,7 @@ func newJsonError(err *Error) *JsonError {
 			break
 		}
 
-		jerr.Causes = append(jerr.Causes, &JsonErrorMsg{
+		jerr.Causes = append(jerr.Causes, &jsonErrorMsg{
 			Msg:  cause.Error(),
 			Type: reflect.TypeOf(cause).String(),
 		})
@@ -79,7 +81,7 @@ func newJsonError(err *Error) *JsonError {
 
 	if len(err.StackTrace) > 0 {
 		for _, frame := range err.StackTrace {
-			jerr.StackTrace = append(jerr.StackTrace, &JsonErrorStack{
+			jerr.StackTrace = append(jerr.StackTrace, &jsonErrorStack{
 				Function: frame.Function,
 				File:     fmt.Sprintf("%s:%d", frame.Filename, frame.Lineno),
 			})
@@ -96,12 +98,12 @@ func newJsonError(err *Error) *JsonError {
 }
 
 func (x *JsonFormatter) Write(ev *Event, w io.Writer) error {
-	m := JsonMsg{
+	m := jsonMsg{
 		Timestamp: ev.Timestamp.Format(x.TimeFormat),
 		Level:     ev.Level.String(),
 		Msg:       ev.Msg,
 		Values:    ev.LogEntity.values,
-		Error:     newJsonError(ev.err),
+		Error:     newjsonError(ev.err),
 	}
 
 	if err := json.NewEncoder(w).Encode(m); err != nil {
