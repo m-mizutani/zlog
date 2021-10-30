@@ -5,19 +5,20 @@ Structured logger in Go.
 ## Usage
 
 - [Basic example](#basic-example)
+	- [Contextual logging](#contextual-logging)
 - [Customize Log output format](#customize-log-output-format)
-    - [Change io.Writer](#change-iowriter)
-    - [Change formatter](#change-formatter)
-    - [Use original emitter](#use-original-emitter)
+	- [Change io.Writer](#change-iowriter)
+	- [Change formatter](#change-formatter)
+	- [Use original emitter](#use-original-emitter)
 - [Leveled Logging](#leveled-logging)
 - [Error handling](#error-handling)
-    - [Output stack trace](#output-stack-trace)
-    - [Output error related values](#output-error-related-values)
+	- [Output stack trace](#output-stack-trace)
+	- [Output error related values](#output-error-related-values)
 - [Filter sensitive data](#filter-sensitive-data)
-    - [By specified value](#by-specified-value)
-    - [By custom type](#by-custom-type)
-    - [By struct tag](#by-struct-tag)
-    - [By data pattern (e.g. personal information)](#by-data-pattern-eg-personal-information)
+	- [By specified value](#by-specified-value)
+	- [By custom type](#by-custom-type)
+	- [By struct tag](#by-struct-tag)
+	- [By data pattern (e.g. personal information)](#by-data-pattern-eg-personal-information)
 
 ### Basic example
 
@@ -42,9 +43,11 @@ func main() {
 
 `zlog.New()` creates a new logger with default settings (console formatter).
 
-`Logger.With()` method allows contextual logging. The method saves a pair of key and value and output it by pretty printing (powered by [k0kubun/pp](https://github.com/k0kubun/pp)).
+![example](https://user-images.githubusercontent.com/605953/139518107-e1b1deb0-f9c8-4439-b527-7e3ae4e575a0.png)
 
-![example](https://user-images.githubusercontent.com/605953/135705361-a3edcdb7-58c4-45e7-848c-5086270ad312.png)
+#### Contextual logging
+
+`Logger.With(key string, value interface{})` method allows contextual logging that output not only message but also related variables. The method saves a pair of key and value and output it by pretty printing (powered by [k0kubun/pp](https://github.com/k0kubun/pp)).
 
 ### Customize Log output format
 

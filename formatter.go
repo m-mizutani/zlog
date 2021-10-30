@@ -123,7 +123,7 @@ func NewConsoleFormatter() *ConsoleFormatter {
 }
 
 var colorMap = map[LogLevel]string{
-	LevelTrace: "gray",
+	LevelTrace: "blue",
 	LevelDebug: "cyan",
 	LevelInfo:  "white",
 	LevelWarn:  "yellow",
@@ -131,7 +131,7 @@ var colorMap = map[LogLevel]string{
 }
 
 func (x *ConsoleFormatter) Write(ev *Event, w io.Writer) error {
-	baseFmt := colorstring.Color("%s [[" + colorMap[ev.Level] + "]%s[reset]] %s")
+	baseFmt := colorstring.Color("%s [[" + colorMap[ev.Level] + "][bold]%s[reset]] %s")
 	if x.NoColor {
 		baseFmt = "%s [%s] %s"
 	}
