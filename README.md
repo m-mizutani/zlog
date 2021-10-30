@@ -1,11 +1,18 @@
 # zlog [![Vulnerability scan](https://github.com/m-mizutani/zlog/actions/workflows/trivy.yml/badge.svg)](https://github.com/m-mizutani/zlog/actions/workflows/trivy.yml) [![Unit test](https://github.com/m-mizutani/zlog/actions/workflows/test.yml/badge.svg)](https://github.com/m-mizutani/zlog/actions/workflows/test.yml) [![Security Scan](https://github.com/m-mizutani/zlog/actions/workflows/gosec.yml/badge.svg)](https://github.com/m-mizutani/zlog/actions/workflows/gosec.yml)
 
-Structured logger in Go.
+A main distinct feature of `zlog` is secure logging that avoid to output secret/sensitive values to log. The feature reduce risk to store secret values (API token, password and such things) and sensitive data like PII (Personal Identifiable Information) such as address, phone number, email address and etc into logging storage.
+
+`zlog` also has major logger features: contextual logging, leveled logging, structured message, show stacktrace of error. See following usage for mote detail.
 
 ## Usage
 
 - [Basic example](#basic-example)
 	- [Contextual logging](#contextual-logging)
+- [Filter sensitive data](#filter-sensitive-data)
+	- [By specified value](#by-specified-value)
+	- [By custom type](#by-custom-type)
+	- [By struct tag](#by-struct-tag)
+	- [By data pattern (e.g. personal information)](#by-data-pattern-eg-personal-information)
 - [Customize Log output format](#customize-log-output-format)
 	- [Change io.Writer](#change-iowriter)
 	- [Change formatter](#change-formatter)
@@ -14,11 +21,6 @@ Structured logger in Go.
 - [Error handling](#error-handling)
 	- [Output stack trace](#output-stack-trace)
 	- [Output error related values](#output-error-related-values)
-- [Filter sensitive data](#filter-sensitive-data)
-	- [By specified value](#by-specified-value)
-	- [By custom type](#by-custom-type)
-	- [By struct tag](#by-struct-tag)
-	- [By data pattern (e.g. personal information)](#by-data-pattern-eg-personal-information)
 
 ### Basic example
 
@@ -49,6 +51,94 @@ func main() {
 
 `Logger.With(key string, value interface{})` method allows contextual logging that output not only message but also related variables. The method saves a pair of key and value and output it by pretty printing (powered by [k0kubun/pp](https://github.com/k0kubun/pp)).
 
+
+### Filter sensitive data
+
+#### By specified value
+
+```go
+	const issuedToken = "abcd1234"
+	authHeader := "Authorization: Bearer " + issuedToken
+
+	logger := newExampleLogger()
+	logger.Filters = []zlog.Filter{
+		filter.Value(issuedToken),
+	}
+	logger.With("auth", authHeader).Info("send header")
+	// Output:  [info] send header
+	// "auth" => "Authorization: Bearer [filtered]"
+```
+
+#### By custom type
+
+```go
+	type password string
+	type myRecord struct {
+		ID    string
+		EMail password
+	}
+	record := myRecord{
+		ID:    "m-mizutani",
+		EMail: "abcd1234",
+	}
+
+	logger := newExampleLogger()
+	logger.Filters = []zlog.Filter{
+		filter.Type(password("")),
+	}
+	logger.With("record", record).Info("Got record")
+	// Output:  [info] Got record
+	// "record" => zlog_test.myRecord{
+	//   ID:    "m-mizutani",
+	//   EMail: "[filtered]",
+	// }
+```
+
+#### By struct tag
+
+```go
+	type myRecord struct {
+		ID    string
+		EMail string `zlog:"secure"`
+	}
+	record := myRecord{
+		ID:    "m-mizutani",
+		EMail: "mizutani@hey.com",
+	}
+
+	logger.Filters = []zlog.Filter{
+		filter.Tag(),
+	}
+	logger.With("record", record).Info("Got record")
+	// Output:  [info] Got record
+	// "record" => zlog_test.myRecord{
+	//   ID:    "m-mizutani",
+	//   EMail: "[filtered]",
+	// }
+```
+
+#### By data pattern (e.g. personal information)
+
+```go
+	type myRecord struct {
+		ID    string
+		Phone string
+	}
+	record := myRecord{
+		ID:    "m-mizutani",
+		Phone: "090-0000-0000",
+	}
+
+	logger.Filters = []zlog.Filter{
+		filter.PhoneNumber(),
+	}
+	logger.With("record", record).Info("Got record")
+	// Output:  [info] Got record
+	// "record" => zlog_test.myRecord{
+	//   ID:    "m-mizutani",
+	//   Phone: "[filtered]",
+	// }
+```
 ### Customize Log output format
 
 zlog has `Emitter` that is interface to output log event. A default emitter is `Writer` that has `Formatter` to format log message, values and error information and `io.Writer` to output formatted log data.
@@ -198,93 +288,6 @@ func main() {
 // ------------------
 ```
 
-### Filter sensitive data
-
-#### By specified value
-
-```go
-	const issuedToken = "abcd1234"
-	authHeader := "Authorization: Bearer " + issuedToken
-
-	logger := newExampleLogger()
-	logger.Filters = []zlog.Filter{
-		filter.Value(issuedToken),
-	}
-	logger.With("auth", authHeader).Info("send header")
-	// Output:  [info] send header
-	// "auth" => "Authorization: Bearer [filtered]"
-```
-
-#### By custom type
-
-```go
-	type password string
-	type myRecord struct {
-		ID    string
-		EMail password
-	}
-	record := myRecord{
-		ID:    "m-mizutani",
-		EMail: "abcd1234",
-	}
-
-	logger := newExampleLogger()
-	logger.Filters = []zlog.Filter{
-		filter.Type(password("")),
-	}
-	logger.With("record", record).Info("Got record")
-	// Output:  [info] Got record
-	// "record" => zlog_test.myRecord{
-	//   ID:    "m-mizutani",
-	//   EMail: "[filtered]",
-	// }
-```
-
-#### By struct tag
-
-```go
-	type myRecord struct {
-		ID    string
-		EMail string `zlog:"secure"`
-	}
-	record := myRecord{
-		ID:    "m-mizutani",
-		EMail: "mizutani@hey.com",
-	}
-
-	logger.Filters = []zlog.Filter{
-		filter.Tag(),
-	}
-	logger.With("record", record).Info("Got record")
-	// Output:  [info] Got record
-	// "record" => zlog_test.myRecord{
-	//   ID:    "m-mizutani",
-	//   EMail: "[filtered]",
-	// }
-```
-
-#### By data pattern (e.g. personal information)
-
-```go
-	type myRecord struct {
-		ID    string
-		Phone string
-	}
-	record := myRecord{
-		ID:    "m-mizutani",
-		Phone: "090-0000-0000",
-	}
-
-	logger.Filters = []zlog.Filter{
-		filter.PhoneNumber(),
-	}
-	logger.With("record", record).Info("Got record")
-	// Output:  [info] Got record
-	// "record" => zlog_test.myRecord{
-	//   ID:    "m-mizutani",
-	//   Phone: "[filtered]",
-	// }
-```
 
 ## License
 
