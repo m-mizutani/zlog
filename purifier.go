@@ -2,17 +2,17 @@ package zlog
 
 import "reflect"
 
-type censor struct {
+type purifier struct {
 	filters Filters
 }
 
-func newCensor(filters Filters) *censor {
-	return &censor{
+func newPurifier(filters Filters) *purifier {
+	return &purifier{
 		filters: filters,
 	}
 }
 
-func (x *censor) clone(value reflect.Value, tag string) reflect.Value {
+func (x *purifier) clone(value reflect.Value, tag string) reflect.Value {
 	adjustValue := func(ret reflect.Value) reflect.Value {
 		switch value.Kind() {
 		case reflect.Ptr, reflect.Map, reflect.Array, reflect.Slice:

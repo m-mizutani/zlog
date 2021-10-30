@@ -11,7 +11,7 @@ import (
 )
 
 func TestClone(t *testing.T) {
-	c := zlog.NewCensor(zlog.Filters{
+	c := zlog.NewPurifier(zlog.Filters{
 		filter.Value("blue"),
 	})
 

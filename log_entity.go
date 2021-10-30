@@ -41,7 +41,7 @@ func (x *LogEntity) With(key string, value interface{}) *LogEntity {
 	e := x.Clone()
 
 	if len(x.logger.Filters) > 0 && value != nil {
-		e.values[key] = newCensor(x.logger.Filters).clone(reflect.ValueOf(value), "").Interface()
+		e.values[key] = newPurifier(x.logger.Filters).clone(reflect.ValueOf(value), "").Interface()
 	} else {
 		e.values[key] = value
 	}
