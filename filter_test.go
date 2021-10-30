@@ -122,3 +122,26 @@ func ExampleFieldFilter() {
 	//   Phone: "[filtered]",
 	// }
 }
+
+func ExampleFieldPrefixFilter() {
+	logger := newExampleLogger()
+
+	type myRecord struct {
+		ID          string
+		SecurePhone string
+	}
+	record := myRecord{
+		ID:          "m-mizutani",
+		SecurePhone: "090-0000-0000",
+	}
+
+	logger.Filters = []zlog.Filter{
+		filter.FieldPrefix("Secure"),
+	}
+	logger.With("record", record).Info("Got record")
+	// Output:  [info] Got record
+	// "record" => zlog_test.myRecord{
+	//   ID:          "m-mizutani",
+	//   SecurePhone: "[filtered]",
+	// }
+}
