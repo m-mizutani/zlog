@@ -9,6 +9,7 @@ Structured logger in Go.
     - [Change io.Writer](#change-iowriter)
     - [Change formatter](#change-formatter)
     - [Use original emitter](#use-original-emitter)
+- [Leveled Logging](#leveled-logging)
 - [Error handling](#error-handling)
     - [Output stack trace](#output-stack-trace)
     - [Output error related values](#output-error-related-values)
@@ -95,6 +96,35 @@ func ExampleEmitter() {
 }
 ```
 
+### Leveled Logging
+
+zlog allows for logging at the following levels.
+
+- `trace` (`zlog.LevelTrace`)
+- `debug` (`zlog.LevelDebug`)
+- `info` (`zlog.LevelInfo`)
+- `warn` (`zlog.LevelWarn`)
+- `error` (`zlog.LevelError`)
+
+Log level can be changed by modifying `Logger.Level` or calling `Logger.SetLogLevel()` method.
+
+Modifying `Logger.Level` directly:
+```go
+	logger.Level = zlog.LevelInfo
+	logger.Debug("debugging")
+	logger.Info("information")
+	// Output: [info] information
+```
+
+Using `SetLogLevel()` method. Log level is case insensitive.
+```go
+	logger.SetLogLevel("InFo")
+
+	logger.Debug("debugging")
+	logger.Info("information")
+	// Output: [info] information
+```
+
 ### Error handling
 
 `Logger.Err(err error)` outputs not only error message but also stack trace and error related values.
@@ -162,8 +192,6 @@ func main() {
 // args => "hello"
 // ------------------
 ```
-
-
 
 ### Filter sensitive data
 
