@@ -2,7 +2,7 @@ package zlog
 
 type Filter interface {
 	ReplaceString(s string) string
-	IsSensitive(value interface{}, tag string) bool
+	ShouldMask(value interface{}, tag string) bool
 }
 
 type Filters []Filter
@@ -14,9 +14,9 @@ func (x Filters) ReplaceString(s string) string {
 	return s
 }
 
-func (x Filters) IsSensitive(value interface{}, tag string) bool {
+func (x Filters) ShouldMask(value interface{}, tag string) bool {
 	for _, f := range x {
-		if f.IsSensitive(value, tag) {
+		if f.ShouldMask(value, tag) {
 			return true
 		}
 	}

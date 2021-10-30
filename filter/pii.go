@@ -25,6 +25,6 @@ func (x *PhoneNumberFilter) ReplaceString(s string) string {
 	return s
 }
 
-func (x *PhoneNumberFilter) IsSensitive(value interface{}, tag string) bool {
+func (x *PhoneNumberFilter) ShouldMask(value interface{}, tag string) bool {
 	return false
 }

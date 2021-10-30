@@ -20,6 +20,6 @@ func (x *ValueFilter) ReplaceString(s string) string {
 	return strings.ReplaceAll(s, x.target, zlog.FilteredLabel)
 }
 
-func (x *ValueFilter) IsSensitive(value interface{}, tag string) bool {
+func (x *ValueFilter) ShouldMask(value interface{}, tag string) bool {
 	return false
 }

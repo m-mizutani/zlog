@@ -31,7 +31,7 @@ func (x *purifier) clone(value reflect.Value, tag string) reflect.Value {
 	}
 
 	var dst reflect.Value
-	if x.filters.IsSensitive(src.Interface(), tag) {
+	if x.filters.ShouldMask(src.Interface(), tag) {
 		dst = reflect.New(src.Type())
 		if src.Kind() == reflect.String {
 			dst.Elem().SetString(FilteredLabel)
