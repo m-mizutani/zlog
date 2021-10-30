@@ -2,17 +2,17 @@ package zlog
 
 import "reflect"
 
-type purifier struct {
+type masking struct {
 	filters Filters
 }
 
-func newPurifier(filters Filters) *purifier {
-	return &purifier{
+func newMasking(filters Filters) *masking {
+	return &masking{
 		filters: filters,
 	}
 }
 
-func (x *purifier) clone(value reflect.Value, tag string) reflect.Value {
+func (x *masking) clone(fieldName string, value reflect.Value, tag string) reflect.Value {
 	adjustValue := func(ret reflect.Value) reflect.Value {
 		switch value.Kind() {
 		case reflect.Ptr, reflect.Map, reflect.Array, reflect.Slice:
@@ -31,7 +31,7 @@ func (x *purifier) clone(value reflect.Value, tag string) reflect.Value {
 	}
 
 	var dst reflect.Value
-	if x.filters.ShouldMask(src.Interface(), tag) {
+	if x.filters.ShouldMask(fieldName, src.Interface(), tag) {
 		dst = reflect.New(src.Type())
 		if src.Kind() == reflect.String {
 			dst.Elem().SetString(FilteredLabel)
@@ -56,7 +56,7 @@ func (x *purifier) clone(value reflect.Value, tag string) reflect.Value {
 				continue
 			}
 
-			dst.Elem().Field(i).Set(x.clone(fv, f.Tag.Get("zlog")))
+			dst.Elem().Field(i).Set(x.clone(f.Name, fv, f.Tag.Get("zlog")))
 		}
 
 	case reflect.Map:
@@ -64,13 +64,13 @@ func (x *purifier) clone(value reflect.Value, tag string) reflect.Value {
 		keys := src.MapKeys()
 		for i := 0; i < src.Len(); i++ {
 			mValue := src.MapIndex(keys[i])
-			dst.SetMapIndex(keys[i], x.clone(mValue, ""))
+			dst.SetMapIndex(keys[i], x.clone(keys[i].String(), mValue, ""))
 		}
 
 	case reflect.Array, reflect.Slice:
 		dst = reflect.MakeSlice(src.Type(), src.Len(), src.Cap())
 		for i := 0; i < src.Len(); i++ {
-			dst.Index(i).Set(x.clone(src.Index(i), ""))
+			dst.Index(i).Set(x.clone(fieldName, src.Index(i), ""))
 		}
 
 	default:

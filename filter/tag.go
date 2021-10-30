@@ -12,6 +12,6 @@ func Tag() *TagFilter {
 
 func (x *TagFilter) ReplaceString(s string) string { return s }
 
-func (x *TagFilter) ShouldMask(value interface{}, tag string) bool {
+func (x *TagFilter) ShouldMask(fieldName string, value interface{}, tag string) bool {
 	return x.SecureTag == tag
 }

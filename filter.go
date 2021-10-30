@@ -2,7 +2,7 @@ package zlog
 
 type Filter interface {
 	ReplaceString(s string) string
-	ShouldMask(value interface{}, tag string) bool
+	ShouldMask(fieldName string, value interface{}, tag string) bool
 }
 
 type Filters []Filter
@@ -14,9 +14,9 @@ func (x Filters) ReplaceString(s string) string {
 	return s
 }
 
-func (x Filters) ShouldMask(value interface{}, tag string) bool {
+func (x Filters) ShouldMask(fieldName string, value interface{}, tag string) bool {
 	for _, f := range x {
-		if f.ShouldMask(value, tag) {
+		if f.ShouldMask(fieldName, value, tag) {
 			return true
 		}
 	}

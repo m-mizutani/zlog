@@ -99,3 +99,26 @@ func ExamplePhoneNumberFilter() {
 	//   Phone: "[filtered]",
 	// }
 }
+
+func ExampleFieldFilter() {
+	logger := newExampleLogger()
+
+	type myRecord struct {
+		ID    string
+		Phone string
+	}
+	record := myRecord{
+		ID:    "m-mizutani",
+		Phone: "090-0000-0000",
+	}
+
+	logger.Filters = []zlog.Filter{
+		filter.Field("Phone"),
+	}
+	logger.With("record", record).Info("Got record")
+	// Output:  [info] Got record
+	// "record" => zlog_test.myRecord{
+	//   ID:    "m-mizutani",
+	//   Phone: "[filtered]",
+	// }
+}

@@ -6,10 +6,10 @@ func (x *Logger) InjectInfra(infra *Infra) {
 	x.infra = infra
 }
 
-func NewPurifier(filters Filters) *purifier {
-	return newPurifier(filters)
+func NewMasking(filters Filters) *masking {
+	return newMasking(filters)
 }
 
-func (x *purifier) Clone(v interface{}) interface{} {
-	return x.clone(reflect.ValueOf(v), "").Interface()
+func (x *masking) Clone(v interface{}) interface{} {
+	return x.clone("", reflect.ValueOf(v), "").Interface()
 }

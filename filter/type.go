@@ -19,6 +19,6 @@ func Type(t interface{}) *TypeFilter {
 
 func (x *TypeFilter) ReplaceString(s string) string { return s }
 
-func (x *TypeFilter) ShouldMask(value interface{}, tag string) bool {
+func (x *TypeFilter) ShouldMask(fieldName string, value interface{}, tag string) bool {
 	return x.target == reflect.TypeOf(value)
 }
