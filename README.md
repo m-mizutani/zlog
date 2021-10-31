@@ -56,88 +56,122 @@ func main() {
 
 #### By specified value
 
-```go
-	const issuedToken = "abcd1234"
-	authHeader := "Authorization: Bearer " + issuedToken
+This function is designed to hide limited and predetermined secret values, such as API tokens that the application itself uses to call external services.
 
-	logger := newExampleLogger()
-	logger.Filters = []zlog.Filter{
-		filter.Value(issuedToken),
-	}
-	logger.With("auth", authHeader).Info("send header")
-	// Output:  [info] send header
-	// "auth" => "Authorization: Bearer [filtered]"
+```go
+const issuedToken = "abcd1234"
+authHeader := "Authorization: Bearer " + issuedToken
+
+logger := newExampleLogger()
+logger.Filters = []zlog.Filter{
+	filter.Value(issuedToken),
+}
+logger.With("auth", authHeader).Info("send header")
+// Output:  [info] send header
+// "auth" => "Authorization: Bearer [filtered]"
+```
+
+#### By field name
+
+This filter hides the secret value if it matches the field name of the specified structure.
+
+```go
+type myRecord struct {
+	ID    string
+	EMail string
+}
+record := myRecord{
+	ID:    "m-mizutani",
+	EMail: "mizutani@hey.com",
+}
+
+logger.Filters = []zlog.Filter{
+	filter.Field("EMail"),
+}
+logger.With("record", record).Info("Got record")
+// Output:  [info] Got record
+// "record" => zlog_test.myRecord{
+//   ID:    "m-mizutani",
+//   EMail: "[filtered]",
+// }
 ```
 
 #### By custom type
 
-```go
-	type password string
-	type myRecord struct {
-		ID    string
-		EMail password
-	}
-	record := myRecord{
-		ID:    "m-mizutani",
-		EMail: "abcd1234",
-	}
+You can define a type that you want to keep secret, and then specify it in a Filter to prevent it from being displayed. The advantage of this method is that copying a value from a custom type to the original type requires a cast, making it easier for the developer to notice unintentional copying. (Of course, this is not a perfect solution because you can still copy by casting.)
 
-	logger := newExampleLogger()
-	logger.Filters = []zlog.Filter{
-		filter.Type(password("")),
-	}
-	logger.With("record", record).Info("Got record")
-	// Output:  [info] Got record
-	// "record" => zlog_test.myRecord{
-	//   ID:    "m-mizutani",
-	//   EMail: "[filtered]",
-	// }
+This method may be useful for use cases where you need to use secret values between multiple structures.
+
+```go
+type password string
+type myRecord struct {
+	ID    string
+	EMail password
+}
+record := myRecord{
+	ID:    "m-mizutani",
+	EMail: "abcd1234",
+}
+
+logger.Filters = []zlog.Filter{
+	filter.Type(password("")),
+}
+logger.With("record", record).Info("Got record")
+// Output:  [info] Got record
+// "record" => zlog_test.myRecord{
+//   ID:    "m-mizutani",
+//   EMail: "[filtered]",
+// }
 ```
 
 #### By struct tag
 
 ```go
-	type myRecord struct {
-		ID    string
-		EMail string `zlog:"secure"`
-	}
-	record := myRecord{
-		ID:    "m-mizutani",
-		EMail: "mizutani@hey.com",
-	}
+type myRecord struct {
+	ID    string
+	EMail string `zlog:"secure"`
+}
+record := myRecord{
+	ID:    "m-mizutani",
+	EMail: "mizutani@hey.com",
+}
 
-	logger.Filters = []zlog.Filter{
-		filter.Tag(),
-	}
-	logger.With("record", record).Info("Got record")
-	// Output:  [info] Got record
-	// "record" => zlog_test.myRecord{
-	//   ID:    "m-mizutani",
-	//   EMail: "[filtered]",
-	// }
+logger.Filters = []zlog.Filter{
+	filter.Tag(),
+}
+logger.With("record", record).Info("Got record")
+// Output:  [info] Got record
+// "record" => zlog_test.myRecord{
+//   ID:    "m-mizutani",
+//   EMail: "[filtered]",
+// }
 ```
 
 #### By data pattern (e.g. personal information)
 
-```go
-	type myRecord struct {
-		ID    string
-		Phone string
-	}
-	record := myRecord{
-		ID:    "m-mizutani",
-		Phone: "090-0000-0000",
-	}
+This is an experimental effort and not a very reliable method, but it may have some value. It is a way to detect and hide personal information that should not be output based on a predefined pattern, like many DLP (Data Leakage Protection) solutions.
 
-	logger.Filters = []zlog.Filter{
-		filter.PhoneNumber(),
-	}
-	logger.With("record", record).Info("Got record")
-	// Output:  [info] Got record
-	// "record" => zlog_test.myRecord{
-	//   ID:    "m-mizutani",
-	//   Phone: "[filtered]",
-	// }
+In the following example, we use a filter that we wrote to detect Japanese phone numbers. The content is just a regular expression. Currently zlog does not have as many patterns as the existing DLP solutions, and the patterns are not accurate enough. However we hope to expand it in the future if necessary.
+
+```go
+type myRecord struct {
+	ID    string
+	Phone string
+}
+record := myRecord{
+	ID:    "m-mizutani",
+	Phone: "090-0000-0000",
+}
+
+logger.Filters = []zlog.Filter{
+	filter.PhoneNumber(),
+}
+logger.With("record", record).Info("Got record")
+// Output:  [info] Got record
+// "record" => zlog_test.myRecord{
+//   ID:    "m-mizutani",
+//   Phone: "[filtered]",
+// }
 ```
 ### Customize Log output format
 
