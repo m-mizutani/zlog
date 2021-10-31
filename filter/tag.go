@@ -1,17 +1,27 @@
 package filter
 
 type TagFilter struct {
-	SecureTag string
+	SecureTags []string
 }
 
-func Tag() *TagFilter {
+const defaultFilterTagName = "secret"
+
+func Tag(tags ...string) *TagFilter {
+	if len(tags) == 0 {
+		tags = []string{defaultFilterTagName}
+	}
 	return &TagFilter{
-		SecureTag: "secret",
+		SecureTags: tags,
 	}
 }
 
 func (x *TagFilter) ReplaceString(s string) string { return s }
 
 func (x *TagFilter) ShouldMask(fieldName string, value interface{}, tag string) bool {
-	return x.SecureTag == tag
+	for i := range x.SecureTags {
+		if x.SecureTags[i] == tag {
+			return true
+		}
+	}
+	return false
 }
