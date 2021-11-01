@@ -10,6 +10,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type allFieldFilter struct{}
+
+func (x *allFieldFilter) ReplaceString(s string) string {
+	return s
+}
+
+func (x *allFieldFilter) ShouldMask(fieldName string, value interface{}, tag string) bool {
+	return fieldName != ""
+}
+
 func TestClone(t *testing.T) {
 	c := zlog.NewMasking(zlog.Filters{
 		filter.Value("blue"),
@@ -203,5 +213,52 @@ func TestClone(t *testing.T) {
 			assert.Equal(t, data.Bool, copied.Bool)
 			assert.Equal(t, data.Bytes, copied.Bytes)
 		})
+	})
+
+	t.Run("filter various type", func(t *testing.T) {
+		mask := zlog.NewMasking(zlog.Filters{
+			&allFieldFilter{},
+		})
+		s := "test"
+
+		type child struct {
+			Data string
+		}
+		type myStruct struct {
+			Func      func() time.Time
+			Chan      chan int
+			Bool      bool
+			Bytes     []byte
+			Strs      []string
+			StrsPtr   []*string
+			Interface interface{}
+			Child     child
+			ChildPtr  *child
+		}
+		data := &myStruct{
+			Func:      time.Now,
+			Chan:      make(chan int),
+			Bool:      true,
+			Bytes:     []byte("timeless"),
+			Strs:      []string{"aa"},
+			StrsPtr:   []*string{&s},
+			Interface: &s,
+			Child:     child{Data: "x"},
+			ChildPtr:  &child{Data: "y"},
+		}
+
+		v := mask.Clone(data)
+		require.NotNil(t, v)
+		copied, ok := v.(*myStruct)
+		require.True(t, ok)
+		require.NotNil(t, copied)
+		assert.Nil(t, copied.Func)
+		assert.Nil(t, copied.Chan)
+		assert.Nil(t, copied.Bytes)
+		assert.Nil(t, copied.Strs)
+		assert.Nil(t, copied.StrsPtr)
+		assert.Nil(t, copied.Interface)
+		assert.Empty(t, copied.Child.Data)
+		assert.Empty(t, copied.ChildPtr.Data)
 	})
 }

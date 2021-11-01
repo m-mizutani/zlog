@@ -1,6 +1,8 @@
 package zlog
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type masking struct {
 	filters Filters
@@ -15,7 +17,7 @@ func newMasking(filters Filters) *masking {
 func (x *masking) clone(fieldName string, value reflect.Value, tag string) reflect.Value {
 	adjustValue := func(ret reflect.Value) reflect.Value {
 		switch value.Kind() {
-		case reflect.Ptr, reflect.Map, reflect.Array, reflect.Slice:
+		case reflect.Ptr, reflect.Map, reflect.Slice, reflect.Array:
 			return ret
 		default:
 			return ret.Elem()
@@ -33,8 +35,11 @@ func (x *masking) clone(fieldName string, value reflect.Value, tag string) refle
 	var dst reflect.Value
 	if x.filters.ShouldMask(fieldName, src.Interface(), tag) {
 		dst = reflect.New(src.Type())
-		if src.Kind() == reflect.String {
+		switch src.Kind() {
+		case reflect.String:
 			dst.Elem().SetString(FilteredLabel)
+		case reflect.Array, reflect.Slice:
+			dst = dst.Elem()
 		}
 		return adjustValue(dst)
 	}
