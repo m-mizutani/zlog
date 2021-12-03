@@ -162,6 +162,9 @@ func (x *ConsoleFormatter) Write(ev *Event, w io.Writer) error {
 				return goerr.Wrap(err, "fail to write console")
 			}
 		}
+		if _, err := w.Write([]byte("\n")); err != nil {
+			return goerr.Wrap(err, "fail to write console")
+		}
 	}
 
 	if ev.err != nil {
