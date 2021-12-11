@@ -3,9 +3,8 @@ package zlog_test
 import "github.com/m-mizutani/zlog"
 
 func ExampleLogLevel() {
-	logger := newExampleLogger()
+	logger := newExampleLogger(zlog.WithLogLevel("info"))
 
-	logger.Level = zlog.LevelInfo
 	logger.Debug("debugging")
 	logger.Info("information")
 	// Output: [info] information

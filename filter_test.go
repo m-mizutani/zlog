@@ -7,17 +7,17 @@ import (
 	"github.com/m-mizutani/zlog/filter"
 )
 
-func newExampleLogger() *zlog.Logger {
-	logger := zlog.New()
-	logger.Emitter = zlog.NewWriterWith(&zlog.ConsoleFormatter{
+func newExampleLogger(options ...zlog.Option) *zlog.Logger {
+	options = append(options, zlog.WithEmitter(zlog.NewWriterWith(&zlog.ConsoleFormatter{
 		TimeFormat: "",
 		NoColor:    true,
-	}, os.Stdout)
+	}, os.Stdout)))
+	logger := zlog.New(options...)
+
 	return logger
 }
 
 func ExampleTypeFilter() {
-	logger := newExampleLogger()
 
 	type password string
 	type myRecord struct {
@@ -29,9 +29,7 @@ func ExampleTypeFilter() {
 		EMail: "abcd1234",
 	}
 
-	logger.Filters = []zlog.Filter{
-		filter.Type(password("")),
-	}
+	logger := newExampleLogger(zlog.WithFilters(filter.Type(password(""))))
 	logger.With("record", record).Info("Got record")
 	// Output:  [info] Got record
 	// "record" => zlog_test.myRecord{
@@ -41,22 +39,19 @@ func ExampleTypeFilter() {
 }
 
 func ExampleValueFilter() {
-	logger := newExampleLogger()
-
 	const issuedToken = "abcd1234"
 	authHeader := "Authorization: Bearer " + issuedToken
 
-	logger.Filters = []zlog.Filter{
+	logger := newExampleLogger(zlog.WithFilters(
 		filter.Value(issuedToken),
-	}
+	))
+
 	logger.With("auth", authHeader).Info("send header")
 	// Output:  [info] send header
 	// "auth" => "Authorization: Bearer [filtered]"
 }
 
 func ExampleTagFilter() {
-	logger := newExampleLogger()
-
 	type myRecord struct {
 		ID    string
 		EMail string `zlog:"secret"`
@@ -66,9 +61,7 @@ func ExampleTagFilter() {
 		EMail: "mizutani@hey.com",
 	}
 
-	logger.Filters = []zlog.Filter{
-		filter.Tag(),
-	}
+	logger := newExampleLogger(zlog.WithFilters(filter.Tag()))
 	logger.With("record", record).Info("Got record")
 	// Output:  [info] Got record
 	// "record" => zlog_test.myRecord{
@@ -78,8 +71,6 @@ func ExampleTagFilter() {
 }
 
 func ExamplePhoneNumberFilter() {
-	logger := newExampleLogger()
-
 	type myRecord struct {
 		ID    string
 		Phone string
@@ -89,9 +80,7 @@ func ExamplePhoneNumberFilter() {
 		Phone: "090-0000-0000",
 	}
 
-	logger.Filters = []zlog.Filter{
-		filter.PhoneNumber(),
-	}
+	logger := newExampleLogger(zlog.WithFilters(filter.PhoneNumber()))
 	logger.With("record", record).Info("Got record")
 	// Output:  [info] Got record
 	// "record" => zlog_test.myRecord{
@@ -101,8 +90,6 @@ func ExamplePhoneNumberFilter() {
 }
 
 func ExampleFieldFilter() {
-	logger := newExampleLogger()
-
 	type myRecord struct {
 		ID    string
 		Phone string
@@ -112,9 +99,7 @@ func ExampleFieldFilter() {
 		Phone: "090-0000-0000",
 	}
 
-	logger.Filters = []zlog.Filter{
-		filter.Field("Phone"),
-	}
+	logger := newExampleLogger(zlog.WithFilters(filter.Field("Phone")))
 	logger.With("record", record).Info("Got record")
 	// Output:  [info] Got record
 	// "record" => zlog_test.myRecord{
@@ -124,8 +109,6 @@ func ExampleFieldFilter() {
 }
 
 func ExampleFieldPrefixFilter() {
-	logger := newExampleLogger()
-
 	type myRecord struct {
 		ID          string
 		SecurePhone string
@@ -135,9 +118,8 @@ func ExampleFieldPrefixFilter() {
 		SecurePhone: "090-0000-0000",
 	}
 
-	logger.Filters = []zlog.Filter{
-		filter.FieldPrefix("Secure"),
-	}
+	logger := newExampleLogger(zlog.WithFilters(filter.FieldPrefix("Secure")))
+
 	logger.With("record", record).Info("Got record")
 	// Output:  [info] Got record
 	// "record" => zlog_test.myRecord{

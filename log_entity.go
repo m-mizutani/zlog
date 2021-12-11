@@ -40,8 +40,8 @@ func (x *LogEntity) Clone() *LogEntity {
 func (x *LogEntity) With(key string, value interface{}) *LogEntity {
 	e := x.Clone()
 
-	if len(x.logger.Filters) > 0 && value != nil {
-		e.values[key] = newMasking(x.logger.Filters).clone(key, reflect.ValueOf(value), "").Interface()
+	if len(x.logger.filters) > 0 && value != nil {
+		e.values[key] = newMasking(x.logger.filters).clone(key, reflect.ValueOf(value), "").Interface()
 	} else {
 		e.values[key] = value
 	}

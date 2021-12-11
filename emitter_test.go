@@ -18,8 +18,7 @@ func (x *myEmitter) Emit(ev *zlog.Event) error {
 }
 
 func ExampleEmitter() {
-	logger := zlog.New()
-	logger.Emitter = &myEmitter{}
+	logger := zlog.New(zlog.WithEmitter(&myEmitter{}))
 
 	logger.Info("waiwai")
 	logger.Info("heyhey")

@@ -19,12 +19,15 @@ func crash2() error {
 }
 
 func TestErrWithPkgErrors(t *testing.T) {
-	logger := zlog.New()
 	buf := bytes.Buffer{}
-	logger.Emitter = zlog.NewWriterWith(&zlog.ConsoleFormatter{
-		TimeFormat: "",
-		NoColor:    true,
-	}, &buf)
+	logger := zlog.New(
+		zlog.WithEmitter(
+			zlog.NewWriterWith(&zlog.ConsoleFormatter{
+				TimeFormat: "",
+				NoColor:    true,
+			}, &buf),
+		),
+	)
 
 	logger.Err(crash1()).Error("bomb!")
 
@@ -60,9 +63,12 @@ func TestErrWithPkgErrors(t *testing.T) {
 }
 
 func TestErrWithPkgErrorsWithJSON(t *testing.T) {
-	logger := zlog.New()
 	buf := bytes.Buffer{}
-	logger.Emitter = zlog.NewWriterWith(&zlog.JsonFormatter{}, &buf)
+	logger := zlog.New(
+		zlog.WithEmitter(
+			zlog.NewWriterWith(&zlog.JsonFormatter{}, &buf),
+		),
+	)
 
 	logger.Err(errors.Wrap(crash1(), "wrapped")).Error("bomb!")
 
@@ -71,9 +77,12 @@ func TestErrWithPkgErrorsWithJSON(t *testing.T) {
 }
 
 func TestErrWithGoErrWithJSON(t *testing.T) {
-	logger := zlog.New()
 	buf := bytes.Buffer{}
-	logger.Emitter = zlog.NewWriterWith(&zlog.JsonFormatter{}, &buf)
+	logger := zlog.New(
+		zlog.WithEmitter(
+			zlog.NewWriterWith(&zlog.JsonFormatter{}, &buf),
+		),
+	)
 
 	logger.Err(goerr.Wrap(crash2(), "wrapped")).Error("bomb!")
 
@@ -82,12 +91,13 @@ func TestErrWithGoErrWithJSON(t *testing.T) {
 }
 
 func TestErrWithGoErr(t *testing.T) {
-	logger := zlog.New()
 	buf := bytes.Buffer{}
-	logger.Emitter = zlog.NewWriterWith(&zlog.ConsoleFormatter{
-		TimeFormat: "",
-		NoColor:    true,
-	}, &buf)
+	logger := zlog.New(zlog.WithEmitter(
+		zlog.NewWriterWith(&zlog.ConsoleFormatter{
+			TimeFormat: "",
+			NoColor:    true,
+		}, &buf),
+	))
 
 	logger.Err(crash2()).Error("bomb!")
 

@@ -9,10 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newTestLogger() (*zlog.Logger, *bytes.Buffer) {
+func newTestLogger(options ...zlog.Option) (*zlog.Logger, *bytes.Buffer) {
 	var buf bytes.Buffer
-	logger := zlog.New()
-	logger.Emitter = zlog.NewWriterWith(zlog.NewConsoleFormatter(), &buf)
+	options = append(options, zlog.WithEmitter(zlog.NewWriterWith(zlog.NewConsoleFormatter(), &buf)))
+	logger := zlog.New(options...)
+
 	return logger, &buf
 }
 
@@ -33,8 +34,8 @@ func TestLogger(t *testing.T) {
 	})
 
 	t.Run("outout message if level is equal or higher than logger level", func(t *testing.T) {
-		logger, buf := newTestLogger()
-		logger.Level = zlog.LevelWarn
+		logger, buf := newTestLogger(zlog.WithLogLevel("warn"))
+
 		logger.Trace("one")
 		logger.Debug("two")
 		logger.Info("three")

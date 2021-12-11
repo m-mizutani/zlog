@@ -24,10 +24,8 @@ func (x *httpAuthFilter) ShouldMask(fieldName string, value interface{}, tag str
 }
 
 func main() {
-	logger := zlog.New()
-	logger.Filters = zlog.Filters{
-		&httpAuthFilter{},
-	}
+	logger := zlog.New(zlog.WithFilters(&httpAuthFilter{}))
+
 	req, _ := http.NewRequest("GET", "https://example.com", nil)
 
 	req.Header.Add("Authorization", "Barer xxxx")

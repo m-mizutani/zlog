@@ -7,22 +7,37 @@ import (
 )
 
 type Logger struct {
-	Level   LogLevel
-	Emitter Emitter
-	Filters Filters
+	level   LogLevel
+	emitter Emitter
+	filters Filters
 
 	errors []error
 	infra  *Infra
 }
 
 // New provides default setting zlog logger. Info level, console formatter and stdout.
-func New() *Logger {
-	return &Logger{
-		Level:   LevelInfo,
-		Emitter: NewWriter(),
-
-		infra: newInfra(),
+func New(options ...Option) *Logger {
+	logger, err := NewWithError(options...)
+	if err != nil {
+		panic(fmt.Sprintf("failed to initialize zlog.Logger: %+v", err))
 	}
+	return logger
+}
+
+func NewWithError(options ...Option) (*Logger, error) {
+	base := &Logger{
+		level:   LevelInfo,
+		emitter: NewWriter(),
+		infra:   newInfra(),
+	}
+
+	for _, opt := range options {
+		if err := opt(base); err != nil {
+			return nil, err
+		}
+	}
+
+	return base, nil
 }
 
 func (x *Logger) SetLogLevel(level string) error {
@@ -30,7 +45,7 @@ func (x *Logger) SetLogLevel(level string) error {
 	if err != nil {
 		return err
 	}
-	x.Level = l
+	x.level = l
 	return nil
 }
 
@@ -39,7 +54,7 @@ func (x *Logger) ReplaceInfraForTest(infra *Infra) {
 }
 
 func (x *Logger) AddFilter(filter Filter) {
-	x.Filters = append(x.Filters, filter)
+	x.filters = append(x.filters, filter)
 }
 
 func (x *Logger) With(key string, value interface{}) *LogEntity {
@@ -57,7 +72,7 @@ func (x *Logger) Log() *LogEntity {
 }
 
 func (x *Logger) Msg(level LogLevel, e *LogEntity, format string, args ...interface{}) {
-	if level < x.Level {
+	if level < x.level {
 		return // skip
 	}
 
@@ -71,7 +86,7 @@ func (x *Logger) Msg(level LogLevel, e *LogEntity, format string, args ...interf
 		LogEntity: *e,
 	}
 
-	if err := x.Emitter.Emit(ev); err != nil {
+	if err := x.emitter.Emit(ev); err != nil {
 		x.errors = append(x.errors, goerr.Wrap(err))
 	}
 }
