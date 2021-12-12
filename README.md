@@ -62,10 +62,10 @@ This function is designed to hide limited and predetermined secret values, such 
 const issuedToken = "abcd1234"
 authHeader := "Authorization: Bearer " + issuedToken
 
-logger := newExampleLogger()
-logger.Filters = []zlog.Filter{
+logger := newExampleLogger(zlog.WithFilters(
 	filter.Value(issuedToken),
-}
+))
+
 logger.With("auth", authHeader).Info("send header")
 // Output:  [info] send header
 // "auth" => "Authorization: Bearer [filtered]"
@@ -78,21 +78,21 @@ This filter hides the secret value if it matches the field name of the specified
 ```go
 type myRecord struct {
 	ID    string
-	EMail string
+	Phone string
 }
 record := myRecord{
 	ID:    "m-mizutani",
-	EMail: "mizutani@hey.com",
+	Phone: "090-0000-0000",
 }
 
-logger.Filters = []zlog.Filter{
-	filter.Field("EMail"),
-}
+logger := newExampleLogger(
+	zlog.WithFilters(filter.Field("Phone")),
+)
 logger.With("record", record).Info("Got record")
 // Output:  [info] Got record
 // "record" => zlog_test.myRecord{
 //   ID:    "m-mizutani",
-//   EMail: "[filtered]",
+//   Phone: "[filtered]",
 // }
 ```
 
@@ -113,9 +113,9 @@ record := myRecord{
 	EMail: "abcd1234",
 }
 
-logger.Filters = []zlog.Filter{
-	filter.Type(password("")),
-}
+logger := newExampleLogger(
+	zlog.WithFilters(filter.Type(password(""))),
+)
 logger.With("record", record).Info("Got record")
 // Output:  [info] Got record
 // "record" => zlog_test.myRecord{
@@ -129,16 +129,14 @@ logger.With("record", record).Info("Got record")
 ```go
 type myRecord struct {
 	ID    string
-	EMail string `zlog:"secure"`
+	EMail string `zlog:"secret"`
 }
 record := myRecord{
 	ID:    "m-mizutani",
 	EMail: "mizutani@hey.com",
 }
 
-logger.Filters = []zlog.Filter{
-	filter.Tag(),
-}
+logger := newExampleLogger(zlog.WithFilters(filter.Tag()))
 logger.With("record", record).Info("Got record")
 // Output:  [info] Got record
 // "record" => zlog_test.myRecord{
@@ -163,9 +161,7 @@ record := myRecord{
 	Phone: "090-0000-0000",
 }
 
-logger.Filters = []zlog.Filter{
-	filter.PhoneNumber(),
-}
+logger := newExampleLogger(zlog.WithFilters(filter.PhoneNumber()))
 logger.With("record", record).Info("Got record")
 // Output:  [info] Got record
 // "record" => zlog_test.myRecord{
@@ -173,6 +169,7 @@ logger.With("record", record).Info("Got record")
 //   Phone: "[filtered]",
 // }
 ```
+
 ### Customize Log output format
 
 zlog has `Emitter` that is interface to output log event. A default emitter is `Writer` that has `Formatter` to format log message, values and error information and `io.Writer` to output formatted log data.
@@ -182,7 +179,11 @@ zlog has `Emitter` that is interface to output log event. A default emitter is `
 For example, change output to standard error.
 
 ```go
-logger.Emitter = zlog.NewWriterWith(zlog.NewConsoleFormatter(), os.Stderr)
+logger := logger := zlog.New(
+	zlog.WithEmitter(
+		zlog.NewWriterWith(zlog.NewConsoleFormatter(), os.Stderr),
+	),
+)
 logger.Info("output to stderr")
 ```
 
@@ -191,7 +192,12 @@ logger.Info("output to stderr")
 For example, use JsonFormatter to output structured json.
 
 ```go
-logger.Emitter = zlog.NewWriterWith(zlog.NewJsonFormatter(), os.Stdout)
+logger := zlog.New(
+	zlog.WithEmitter(
+		zlog.NewWriterWith(zlog.NewJsonFormatter(), os.Stdout),
+	),
+)
+
 logger.Info("output as json format")
 // Output: {"timestamp":"2021-10-02T14:58:11.791258","level":"info","msg":"output as json format","values":null}
 ```
@@ -201,7 +207,6 @@ logger.Info("output as json format")
 You can use your original Emitter that has `Emit(*zlog.Event) error` method.
 
 ```go
-
 type myEmitter struct {
 	seq int
 }
@@ -214,8 +219,9 @@ func (x *myEmitter) Emit(ev *zlog.Event) error {
 }
 
 func ExampleEmitter() {
-	logger := zlog.New()
-	logger.Emitter = &myEmitter{}
+	logger := zlog.New(
+		zlog.WithEmitter(&myEmitter{}),
+	)
 
 	logger.Info("waiwai")
 	logger.Info("heyhey")
@@ -239,7 +245,7 @@ Log level can be changed by modifying `Logger.Level` or calling `Logger.SetLogLe
 
 Modifying `Logger.Level` directly:
 ```go
-	logger.Level = zlog.LevelInfo
+	logger = zlog.New(zlog.WithLogLevel("info"))
 	logger.Debug("debugging")
 	logger.Info("information")
 	// Output: [info] information

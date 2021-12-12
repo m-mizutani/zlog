@@ -29,7 +29,9 @@ func ExampleTypeFilter() {
 		EMail: "abcd1234",
 	}
 
-	logger := newExampleLogger(zlog.WithFilters(filter.Type(password(""))))
+	logger := newExampleLogger(
+		zlog.WithFilters(filter.Type(password(""))),
+	)
 	logger.With("record", record).Info("Got record")
 	// Output:  [info] Got record
 	// "record" => zlog_test.myRecord{
@@ -99,7 +101,9 @@ func ExampleFieldFilter() {
 		Phone: "090-0000-0000",
 	}
 
-	logger := newExampleLogger(zlog.WithFilters(filter.Field("Phone")))
+	logger := newExampleLogger(
+		zlog.WithFilters(filter.Field("Phone")),
+	)
 	logger.With("record", record).Info("Got record")
 	// Output:  [info] Got record
 	// "record" => zlog_test.myRecord{
