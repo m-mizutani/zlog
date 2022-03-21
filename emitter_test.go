@@ -10,7 +10,7 @@ type myEmitter struct {
 	seq int
 }
 
-func (x *myEmitter) Emit(ev *zlog.Event) error {
+func (x *myEmitter) Emit(ev *zlog.Log) error {
 	prefix := []string{"＼(^o^)／", "(´・ω・｀)", "(・∀・)"}
 	fmt.Println(prefix[x.seq%3], ev.Msg)
 	x.seq++

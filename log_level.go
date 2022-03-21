@@ -14,6 +14,7 @@ const (
 	LevelInfo
 	LevelWarn
 	LevelError
+	LevelFatal
 )
 
 var strToLevelMap = map[string]LogLevel{
@@ -22,6 +23,7 @@ var strToLevelMap = map[string]LogLevel{
 	"info":  LevelInfo,
 	"warn":  LevelWarn,
 	"error": LevelError,
+	"fatal": LevelFatal,
 }
 
 func (x LogLevel) String() string {
@@ -34,13 +36,13 @@ func (x LogLevel) String() string {
 
 var levelToStrMap = map[LogLevel]string{}
 
-func initLogLevelMap() {
+func init() {
 	for k, v := range strToLevelMap {
 		levelToStrMap[v] = k
 	}
 }
 
-func StrToLogLevel(s string) (LogLevel, error) {
+func LookupLogLevel(s string) (LogLevel, error) {
 	level, ok := strToLevelMap[strings.ToLower(s)]
 	if !ok {
 		return LevelError, goerr.Wrap(ErrInvalidLogLevel).With("level", s)

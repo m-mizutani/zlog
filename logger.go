@@ -2,17 +2,25 @@ package zlog
 
 import (
 	"fmt"
-
-	"github.com/m-mizutani/goerr"
+	"reflect"
+	"time"
 )
 
-type Logger struct {
-	level   LogLevel
-	emitter Emitter
-	filters Filters
+type loggerBase struct {
+	level     LogLevel
+	emitter   Emitter
+	filters   Filters
+	errHooks  []ErrorHook
+	preHooks  []LogHook
+	postHooks []LogHook
+	now       func() time.Time
+}
 
-	errors []error
-	infra  *Infra
+type Logger struct {
+	loggerBase
+
+	err    error
+	values map[string]interface{}
 }
 
 // New provides default setting zlog logger. Info level, console formatter and stdout.
@@ -25,86 +33,108 @@ func New(options ...Option) *Logger {
 }
 
 func NewWithError(options ...Option) (*Logger, error) {
-	base := &Logger{
-		level:   LevelInfo,
-		emitter: NewWriter(),
-		infra:   newInfra(),
+	logger := &Logger{
+		loggerBase: loggerBase{
+			level:   LevelInfo,
+			emitter: NewConsoleEmitter(),
+			now:     time.Now,
+		},
+		values: make(map[string]interface{}),
 	}
 
 	for _, opt := range options {
-		if err := opt(base); err != nil {
-			return nil, err
-		}
+		opt(logger)
 	}
 
-	return base, nil
+	return logger, nil
 }
 
-func (x *Logger) SetLogLevel(level string) error {
-	l, err := StrToLogLevel(level)
-	if err != nil {
-		return err
+func (x *Logger) Clone(options ...Option) *Logger {
+	newLogger := x.reflect()
+	newLogger.filters = x.filters[:]
+	newLogger.preHooks = x.preHooks[:]
+	newLogger.postHooks = x.postHooks[:]
+	newLogger.errHooks = x.errHooks[:]
+
+	for _, opt := range options {
+		opt(newLogger)
 	}
-	x.level = l
-	return nil
+	return newLogger
 }
 
-func (x *Logger) ReplaceInfraForTest(infra *Infra) {
-	x.infra = infra
+func (x *Logger) reflect() *Logger {
+	newLogger := &Logger{
+		loggerBase: x.loggerBase,
+		values:     make(map[string]interface{}),
+		err:        x.err,
+	}
+	for k, v := range x.values {
+		newLogger.values[k] = v
+	}
+
+	return newLogger
 }
 
-func (x *Logger) AddFilter(filter Filter) {
-	x.filters = append(x.filters, filter)
+func (x *Logger) With(key string, value interface{}) *Logger {
+	// With sets key-value pair for the log. A previous value is overwritten by same key.
+	e := x.reflect()
+
+	if len(x.filters) > 0 && value != nil {
+		e.values[key] = newMasking(x.filters).clone(key, reflect.ValueOf(value), "").Interface()
+	} else {
+		e.values[key] = value
+	}
+
+	return e
 }
 
-func (x *Logger) With(key string, value interface{}) *LogEntity {
-	e := x.Log()
-	return e.With(key, value)
+func (x *Logger) Err(err error) *Logger {
+	e := x.reflect()
+	e.err = err
+	return e
 }
 
-func (x *Logger) Err(err error) *LogEntity {
-	e := x.Log()
-	return e.Err(err)
-}
-
-func (x *Logger) Log() *LogEntity {
-	return newLogEntity(x)
-}
-
-func (x *Logger) Msg(level LogLevel, e *LogEntity, format string, args ...interface{}) {
+func (x *Logger) msg(level LogLevel, format string, args ...interface{}) {
 	if level < x.level {
 		return // skip
 	}
 
-	if e == nil {
-		e = &LogEntity{}
-	}
-	ev := &Event{
+	log := &Log{
 		Level:     level,
 		Msg:       fmt.Sprintf(format, args...),
-		Timestamp: x.infra.Now(),
-		LogEntity: *e,
+		Timestamp: x.now(),
+		Values:    x.values,
+		Error:     newError(x.err),
 	}
 
-	if err := x.emitter.Emit(ev); err != nil {
-		x.errors = append(x.errors, goerr.Wrap(err))
+	for _, hook := range x.preHooks {
+		hook(log)
+	}
+	if err := x.emitter.Emit(log); err != nil {
+		for _, hook := range x.errHooks {
+			hook(err, log)
+		}
+	}
+	for _, hook := range x.postHooks {
+		hook(log)
 	}
 }
-
-func (x *Logger) GetErrors() []error { return x.errors }
 
 func (x *Logger) Trace(format string, args ...interface{}) {
-	x.Msg(LevelTrace, nil, format, args...)
+	x.msg(LevelTrace, format, args...)
 }
 func (x *Logger) Debug(format string, args ...interface{}) {
-	x.Msg(LevelDebug, nil, format, args...)
+	x.msg(LevelDebug, format, args...)
 }
 func (x *Logger) Info(format string, args ...interface{}) {
-	x.Msg(LevelInfo, nil, format, args...)
+	x.msg(LevelInfo, format, args...)
 }
 func (x *Logger) Warn(format string, args ...interface{}) {
-	x.Msg(LevelWarn, nil, format, args...)
+	x.msg(LevelWarn, format, args...)
 }
 func (x *Logger) Error(format string, args ...interface{}) {
-	x.Msg(LevelError, nil, format, args...)
+	x.msg(LevelError, format, args...)
+}
+func (x *Logger) Fatal(format string, args ...interface{}) {
+	x.msg(LevelFatal, format, args...)
 }

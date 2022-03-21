@@ -2,10 +2,6 @@ package zlog
 
 import "reflect"
 
-func (x *Logger) InjectInfra(infra *Infra) {
-	x.infra = infra
-}
-
 func NewMasking(filters Filters) *masking {
 	return newMasking(filters)
 }

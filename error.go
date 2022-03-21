@@ -20,14 +20,18 @@ type Frame struct {
 }
 
 type Error struct {
-	Err        error
+	Cause      error
 	StackTrace []*Frame
 	Values     map[string]interface{}
 }
 
 func newError(err error) *Error {
+	if err == nil {
+		return nil
+	}
+
 	return &Error{
-		Err:        err,
+		Cause:      err,
 		StackTrace: extractStackTrace(err),
 		Values:     extractErrorValues(err),
 	}
