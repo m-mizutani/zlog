@@ -1,18 +1,18 @@
 package zlog_test
 
 import (
-	"os"
+	"time"
 
 	"github.com/m-mizutani/zlog"
 	"github.com/m-mizutani/zlog/filter"
 )
 
 func newExampleLogger(options ...zlog.Option) *zlog.Logger {
-	options = append(options, zlog.WithEmitter(zlog.NewWriterWith(&zlog.ConsoleFormatter{
-		TimeFormat: "",
-		NoColor:    true,
-	}, os.Stdout)))
-	logger := zlog.New(options...)
+	emitter := zlog.NewConsoleEmitter(
+		zlog.ConsoleNoColor(),
+		zlog.ConsoleTimeFormat(""),
+	)
+	logger := zlog.New(append(options, zlog.WithEmitter(emitter))...)
 
 	return logger
 }
@@ -33,7 +33,7 @@ func ExampleTypeFilter() {
 		zlog.WithFilters(filter.Type(password(""))),
 	)
 	logger.With("record", record).Info("Got record")
-	// Output:  [info] Got record
+	// Output: [info] Got record
 	// "record" => zlog_test.myRecord{
 	//   ID:    "m-mizutani",
 	//   EMail: "[filtered]",
@@ -46,7 +46,10 @@ func ExampleValueFilter() {
 
 	logger := newExampleLogger(zlog.WithFilters(
 		filter.Value(issuedToken),
-	))
+	), zlog.WithClock(func() time.Time {
+		return time.Date(2021, 4, 20, 5, 12, 19, 0, time.Local)
+	}),
+	)
 
 	logger.With("auth", authHeader).Info("send header")
 	// Output:  [info] send header
@@ -63,7 +66,12 @@ func ExampleTagFilter() {
 		EMail: "mizutani@hey.com",
 	}
 
-	logger := newExampleLogger(zlog.WithFilters(filter.Tag()))
+	logger := newExampleLogger(
+		zlog.WithFilters(filter.Tag()),
+		zlog.WithClock(func() time.Time {
+			return time.Date(2021, 4, 20, 5, 12, 19, 0, time.Local)
+		}),
+	)
 	logger.With("record", record).Info("Got record")
 	// Output:  [info] Got record
 	// "record" => zlog_test.myRecord{

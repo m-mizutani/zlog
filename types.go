@@ -2,9 +2,10 @@ package zlog
 
 import "time"
 
-type Event struct {
+type Log struct {
 	Level     LogLevel
 	Timestamp time.Time
 	Msg       string
-	LogEntity
+	Values    map[string]interface{}
+	Error     *Error
 }

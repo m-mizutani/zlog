@@ -10,19 +10,22 @@ import (
 )
 
 func newTestLogger(options ...zlog.Option) (*zlog.Logger, *bytes.Buffer) {
-	var buf bytes.Buffer
-	options = append(options, zlog.WithEmitter(zlog.NewWriterWith(zlog.NewConsoleFormatter(), &buf)))
-	logger := zlog.New(options...)
+	buf := &bytes.Buffer{}
+	emitter := zlog.NewConsoleEmitter(
+		zlog.ConsoleNoColor(),
+		zlog.ConsoleWriter(buf),
+	)
 
-	return logger, &buf
+	logger := zlog.New(append(options, zlog.WithEmitter(emitter))...)
+
+	return logger, buf
 }
 
 func TestLogger(t *testing.T) {
 	t.Run("outout message with values", func(t *testing.T) {
-		logger, buf := newTestLogger()
-		logger.InjectInfra(&zlog.Infra{
-			Now: func() time.Time { return time.Date(2021, 4, 20, 5, 12, 19, 0, time.Local) },
-		})
+		logger, buf := newTestLogger(zlog.WithClock(func() time.Time {
+			return time.Date(2021, 4, 20, 5, 12, 19, 0, time.Local)
+		}))
 		logger.With("magic", "five").Info("hello %s", "friends")
 
 		msg := buf.String()
