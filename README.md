@@ -98,7 +98,7 @@ logger.With("record", record).Info("Got record")
 
 #### By custom type
 
-You can define a type that you want to keep secret, and then specify it in a Filter to prLog it from being displayed. The advantage of this method is that copying a value from a custom type to the original type requires a cast, making it easier for the developer to notice unintentional copying. (Of course, this is not a perfect solution because you can still copy by casting.)
+You can define a type that you want to keep secret, and then specify it in a Filter to prevent it from being displayed. The advantage of this method is that copying a value from a custom type to the original type requires a cast, making it easier for the developer to notice unintentional copying. (Of course, this is not a perfect solution because you can still copy by casting.)
 
 This method may be useful for use cases where you need to use secret values between multiple structures.
 
@@ -172,7 +172,7 @@ logger.With("record", record).Info("Got record")
 
 ### Customize Log output format
 
-zlog has `Emitter` that is interface to output log Log. A default emitter is `Writer` that has `Formatter` to format log message, values and error information and `io.Writer` to output formatted log data.
+zlog has `Emitter` that is interface to output log event. A default emitter is `Writer` that has `Formatter` to format log message, values and error information and `io.Writer` to output formatted log data.
 
 #### Change io.Writer
 
