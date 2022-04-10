@@ -104,7 +104,7 @@ func (x *Logger) msg(level LogLevel, format string, args ...interface{}) {
 		Msg:       fmt.Sprintf(format, args...),
 		Timestamp: x.now(),
 		Values:    x.values,
-		Error:     newError(x.err),
+		Error:     newError(x.err, newMasking(x.filters)),
 	}
 
 	for _, hook := range x.preHooks {

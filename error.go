@@ -2,6 +2,7 @@ package zlog
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -22,18 +23,25 @@ type Frame struct {
 type Error struct {
 	Cause      error
 	StackTrace []*Frame
-	Values     map[any]any
+	Values     map[string]any
 }
 
-func newError(err error) *Error {
+func newError(err error, m *masking) *Error {
 	if err == nil {
 		return nil
+	}
+
+	values := extractErrorValues(err)
+
+	maskedValues := map[string]any{}
+	for key, value := range values {
+		maskedValues[key] = m.clone(key, reflect.ValueOf(value), "").Interface()
 	}
 
 	return &Error{
 		Cause:      err,
 		StackTrace: extractStackTrace(err),
-		Values:     extractErrorValues(err),
+		Values:     maskedValues,
 	}
 }
 
@@ -68,7 +76,7 @@ func extractStackTrace(err error) []*Frame {
 	return nil
 }
 
-func extractErrorValues(err error) map[any]any {
+func extractErrorValues(err error) map[string]any {
 	var goErr *goerr.Error
 	switch {
 	case errors.As(err, &goErr):

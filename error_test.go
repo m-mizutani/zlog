@@ -6,6 +6,7 @@ import (
 
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/zlog"
+	"github.com/m-mizutani/zlog/filter"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -101,4 +102,28 @@ func TestErrWithGoErr(t *testing.T) {
 	assert.Contains(t, output, "[StackTrace]\ngithub.com/m-mizutani/zlog_test.crash2\n")
 	assert.Contains(t, output, "/zlog/error_test.go:18\n")
 	assert.Contains(t, output, "[Values]\nparam => \"value\"\n")
+}
+
+func TestErrValueFilter(t *testing.T) {
+	buf := &bytes.Buffer{}
+	emitter := zlog.NewConsoleEmitter(
+		zlog.ConsoleNoColor(),
+		zlog.ConsoleWriter(buf),
+	)
+	logger := zlog.New(
+		zlog.WithEmitter(emitter),
+		zlog.WithFilters(filter.Field("Password")),
+	)
+
+	v := struct {
+		Password string
+	}{
+		Password: "abc123",
+	}
+	err := goerr.New("missing potato").With("v", v)
+	logger.Err(err).Error("bomb!")
+
+	s := buf.String()
+	assert.Contains(t, s, "[filtered]")
+	assert.NotContains(t, s, "abc123")
 }
