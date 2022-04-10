@@ -75,6 +75,10 @@ func TestErrWithGoErrWithJSON(t *testing.T) {
 	buf := &bytes.Buffer{}
 	logger := zlog.New(
 		zlog.WithEmitter(zlog.NewJsonEmitter(zlog.JsonWriter(buf))),
+		zlog.WithErrHook(func(err error, l *zlog.Log) {
+			t.Log(err)
+			t.FailNow()
+		}),
 	)
 
 	logger.Err(goerr.Wrap(crash2(), "wrapped")).Error("bomb!")

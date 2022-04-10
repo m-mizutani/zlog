@@ -22,7 +22,7 @@ type Frame struct {
 type Error struct {
 	Cause      error
 	StackTrace []*Frame
-	Values     map[string]interface{}
+	Values     map[any]any
 }
 
 func newError(err error) *Error {
@@ -68,7 +68,7 @@ func extractStackTrace(err error) []*Frame {
 	return nil
 }
 
-func extractErrorValues(err error) map[string]interface{} {
+func extractErrorValues(err error) map[any]any {
 	var goErr *goerr.Error
 	switch {
 	case errors.As(err, &goErr):

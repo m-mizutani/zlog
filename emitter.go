@@ -8,7 +8,7 @@ import (
 	"reflect"
 
 	"github.com/k0kubun/colorstring"
-	"github.com/k0kubun/pp"
+	"github.com/k0kubun/pp/v3"
 	"github.com/m-mizutani/goerr"
 	"github.com/pkg/errors"
 )
@@ -19,9 +19,12 @@ type Emitter interface {
 
 // ConsoleEmitter outputs log to console with rich format.
 type ConsoleEmitter struct {
-	timeFormat string
-	noColor    bool
-	writer     io.Writer
+	timeFormat  string
+	noColor     bool
+	writer      io.Writer
+	format      string
+	prettyPrint bool
+	printer     *pp.PrettyPrinter
 }
 
 type ConsoleEmitterOption func(x *ConsoleEmitter)
@@ -34,11 +37,17 @@ func ConsoleTimeFormat(format string) ConsoleEmitterOption {
 func ConsoleNoColor() ConsoleEmitterOption {
 	return func(x *ConsoleEmitter) {
 		x.noColor = true
+		x.printer.SetColoringEnabled(false)
 	}
 }
 func ConsoleWriter(w io.Writer) ConsoleEmitterOption {
 	return func(x *ConsoleEmitter) {
 		x.writer = w
+	}
+}
+func ConsolePrettyPrint(w io.Writer) ConsoleEmitterOption {
+	return func(x *ConsoleEmitter) {
+		x.prettyPrint = true
 	}
 }
 
@@ -47,6 +56,7 @@ func NewConsoleEmitter(options ...ConsoleEmitterOption) *ConsoleEmitter {
 		timeFormat: "15:04:05.000",
 		noColor:    false,
 		writer:     os.Stdout,
+		printer:    pp.New(),
 	}
 	for _, opt := range options {
 		opt(emitter)
@@ -86,8 +96,7 @@ func (x *ConsoleEmitter) Emit(log *Log) error {
 			if _, err := w.Write([]byte(fmt.Sprintf("\"%s\" => ", k))); err != nil {
 				return goerr.Wrap(err, "fail to write console")
 			}
-			pp.ColoringEnabled = !x.noColor
-			if _, err := pp.Fprint(w, v); err != nil {
+			if _, err := x.printer.Fprint(w, v); err != nil {
 				return goerr.Wrap(err)
 			}
 			if _, err := w.Write([]byte("\n")); err != nil {
@@ -115,8 +124,7 @@ func (x *ConsoleEmitter) Emit(log *Log) error {
 			fmt.Fprintf(w, "\n[Values]\n")
 			for key, value := range log.Error.Values {
 				fmt.Fprintf(w, "%s => ", key)
-				pp.ColoringEnabled = !x.noColor
-				pp.Fprint(w, value)
+				x.printer.Fprint(w, value)
 				fmt.Fprintf(w, "\n")
 			}
 		}
@@ -165,11 +173,11 @@ func JsonPrettyPrint() JsonEmitterOption {
 }
 
 type jsonMsg struct {
-	Timestamp string                 `json:"timestamp"`
-	Level     string                 `json:"level"`
-	Msg       string                 `json:"msg"`
-	Values    map[string]interface{} `json:"values,omitempty"`
-	Error     *jsonError             `json:"error,omitempty"`
+	Timestamp string         `json:"timestamp"`
+	Level     string         `json:"level"`
+	Msg       string         `json:"msg"`
+	Values    map[string]any `json:"values,omitempty"`
+	Error     *jsonError     `json:"error,omitempty"`
 }
 
 type jsonErrorStack struct {
@@ -184,9 +192,9 @@ type jsonErrorMsg struct {
 
 type jsonError struct {
 	jsonErrorMsg
-	Causes     []*jsonErrorMsg        `json:"causes,omitempty"`
-	StackTrace []*jsonErrorStack      `json:"stacktrace,omitempty"`
-	Values     map[string]interface{} `json:"values,omitempty"`
+	Causes     []*jsonErrorMsg   `json:"causes,omitempty"`
+	StackTrace []*jsonErrorStack `json:"stacktrace,omitempty"`
+	Values     map[string]any    `json:"values,omitempty"`
 }
 
 func newjsonError(err *Error) *jsonError {
@@ -224,9 +232,9 @@ func newjsonError(err *Error) *jsonError {
 		}
 	}
 	if err.Values != nil && len(err.Values) > 0 {
-		jerr.Values = make(map[string]interface{})
+		jerr.Values = make(map[string]any)
 		for key, value := range err.Values {
-			jerr.Values[key] = value
+			jerr.Values[fmt.Sprintf("%v", key)] = value
 		}
 	}
 

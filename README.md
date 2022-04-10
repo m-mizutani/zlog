@@ -6,22 +6,6 @@ A main distinct feature of `zlog` is secure logging that avoid to output secret/
 
 ## Usage
 
-- [Basic example](#basic-example)
-	- [Contextual logging](#contextual-logging)
-- [Filter sensitive data](#filter-sensitive-data)
-	- [By specified value](#by-specified-value)
-	- [By custom type](#by-custom-type)
-	- [By struct tag](#by-struct-tag)
-	- [By data pattern (e.g. personal information)](#by-data-pattern-eg-personal-information)
-- [Customize Log output format](#customize-log-output-format)
-	- [Change io.Writer](#change-iowriter)
-	- [Change formatter](#change-formatter)
-	- [Use original emitter](#use-original-emitter)
-- [Leveled Logging](#leveled-logging)
-- [Error handling](#error-handling)
-	- [Output stack trace](#output-stack-trace)
-	- [Output error related values](#output-error-related-values)
-
 ### Basic example
 
 ```go

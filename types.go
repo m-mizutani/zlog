@@ -6,6 +6,6 @@ type Log struct {
 	Level     LogLevel
 	Timestamp time.Time
 	Msg       string
-	Values    map[string]interface{}
+	Values    map[string]any
 	Error     *Error
 }
