@@ -80,7 +80,11 @@ func extractErrorValues(err error) map[string]any {
 	var goErr *goerr.Error
 	switch {
 	case errors.As(err, &goErr):
-		return goErr.Values()
+		values := map[string]any{}
+		for k, v := range goErr.Values() {
+			values[fmt.Sprintf("%v", k)] = v
+		}
+		return values
 	}
 	return nil
 }
