@@ -20,7 +20,7 @@ type Logger struct {
 	loggerBase
 
 	err    error
-	values map[string]interface{}
+	values map[string]any
 }
 
 // New provides default setting zlog logger. Info level, console formatter and stdout.
@@ -39,7 +39,7 @@ func NewWithError(options ...Option) (*Logger, error) {
 			emitter: NewConsoleEmitter(),
 			now:     time.Now,
 		},
-		values: make(map[string]interface{}),
+		values: make(map[string]any),
 	}
 
 	for _, opt := range options {
@@ -65,7 +65,7 @@ func (x *Logger) Clone(options ...Option) *Logger {
 func (x *Logger) reflect() *Logger {
 	newLogger := &Logger{
 		loggerBase: x.loggerBase,
-		values:     make(map[string]interface{}),
+		values:     make(map[string]any),
 		err:        x.err,
 	}
 	for k, v := range x.values {
