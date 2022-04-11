@@ -57,3 +57,17 @@ func WithPostHook(hook func(*Log)) Option {
 		logger.postHooks = append(logger.postHooks, hook)
 	}
 }
+
+func WithAsync(queueSize int) Option {
+	return func(logger *Logger) {
+		logger.asyncCh = make(chan *Log, queueSize)
+		logger.asyncWait.Add(1)
+
+		go func() {
+			defer logger.asyncWait.Done()
+			for log := range logger.asyncCh {
+				logger.emit(log)
+			}
+		}()
+	}
+}

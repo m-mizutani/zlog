@@ -3,6 +3,7 @@ package zlog
 import (
 	"fmt"
 	"reflect"
+	"sync"
 	"time"
 )
 
@@ -14,6 +15,8 @@ type loggerBase struct {
 	preHooks  []LogHook
 	postHooks []LogHook
 	now       func() time.Time
+	asyncCh   chan *Log
+	asyncWait sync.WaitGroup
 }
 
 type Logger struct {
@@ -107,6 +110,14 @@ func (x *Logger) msg(level LogLevel, format string, args ...interface{}) {
 		Error:     newError(x.err, newMasking(x.filters)),
 	}
 
+	if x.asyncCh == nil {
+		x.emit(log)
+	} else {
+		x.asyncCh <- log
+	}
+}
+
+func (x *Logger) emit(log *Log) {
 	for _, hook := range x.preHooks {
 		hook(log)
 	}
@@ -137,4 +148,13 @@ func (x *Logger) Error(format string, args ...interface{}) {
 }
 func (x *Logger) Fatal(format string, args ...interface{}) {
 	x.msg(LevelFatal, format, args...)
+}
+
+func (x *Logger) Flush() {
+	if x.asyncCh == nil {
+		return
+	}
+
+	close(x.asyncCh)
+	x.asyncWait.Wait()
 }
