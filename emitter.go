@@ -97,7 +97,7 @@ func (x *ConsoleEmitter) Emit(log *Log) error {
 				return goerr.Wrap(err, "fail to write console")
 			}
 			if _, err := x.printer.Fprint(w, v); err != nil {
-				return goerr.Wrap(err)
+				return goerr.Wrap(err, "fail to write console")
 			}
 			if _, err := w.Write([]byte("\n")); err != nil {
 				return goerr.Wrap(err, "fail to write console")
@@ -123,9 +123,15 @@ func (x *ConsoleEmitter) Emit(log *Log) error {
 		if log.Error.Values != nil && len(log.Error.Values) > 0 {
 			fmt.Fprintf(w, "\n[Values]\n")
 			for key, value := range log.Error.Values {
-				fmt.Fprintf(w, "%s => ", key)
-				x.printer.Fprint(w, value)
-				fmt.Fprintf(w, "\n")
+				if _, err := fmt.Fprintf(w, "%s => ", key); err != nil {
+					return goerr.Wrap(err, "fail to write console")
+				}
+				if _, err := x.printer.Fprint(w, value); err != nil {
+					return goerr.Wrap(err, "fail to write console")
+				}
+				if _, err := fmt.Fprintf(w, "\n"); err != nil {
+					return goerr.Wrap(err, "fail to write console")
+				}
 			}
 		}
 		fmt.Fprintf(w, "--------------------------------------------\n")
