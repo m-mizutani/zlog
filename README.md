@@ -4,6 +4,32 @@ A main distinct feature of `zlog` is secure logging that avoid to output secret/
 
 `zlog` also has major logger features: contextual logging, leveled logging, structured message, show stacktrace of error. See following usage for mote detail.
 
+For example, adding `zlog:"secret"` tag to `Email` field in structure.
+
+```go
+type myRecord struct {
+	ID    string
+	EMail string `zlog:"secret"`
+}
+record := myRecord{
+	ID:    "m-mizutani",
+	EMail: "mizutani@hey.com",
+}
+
+logger := newExampleLogger(zlog.WithFilters(filter.Tag()))
+logger.With("record", record).Info("Got record")
+```
+
+Then, output following log with filtered `Email` field.
+
+```bash
+ [info] Got record
+ "record" => zlog_test.myRecord{
+   ID:    "m-mizutani",
+   EMail: "[filtered]",
+ }
+```
+
 ## Usage
 
 ### Basic example
