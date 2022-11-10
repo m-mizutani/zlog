@@ -22,7 +22,6 @@ type ConsoleEmitter struct {
 	timeFormat  string
 	noColor     bool
 	writer      io.Writer
-	format      string
 	prettyPrint bool
 	printer     *pp.PrettyPrinter
 }
@@ -92,7 +91,8 @@ func (x *ConsoleEmitter) Emit(log *Log) error {
 	}
 
 	if len(log.Values) > 0 {
-		for k, v := range log.Values {
+		for _, k := range log.OrderedKeys() {
+			v := log.Values[k]
 			if _, err := w.Write([]byte(fmt.Sprintf("\"%s\" => ", k))); err != nil {
 				return goerr.Wrap(err, "fail to write console")
 			}
