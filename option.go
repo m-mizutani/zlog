@@ -23,6 +23,13 @@ func WithLogLevel(level string) Option {
 	}
 }
 
+// WithLogLevelValue sets directly zlog.LevelTrace, zlog.LevelDebug and so on.
+func WithLogLevelValue(level LogLevel) Option {
+	return func(logger *Logger) {
+		logger.level = level
+	}
+}
+
 // WithEmitter replaces emitter in the logger
 func WithEmitter(emitter Emitter) Option {
 	return func(logger *Logger) {
